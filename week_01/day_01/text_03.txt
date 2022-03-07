@@ -1,1 +1,1 @@
-This is the last txt file I'm generating for today!
+This is the last *.txt file I'm generating for today!
