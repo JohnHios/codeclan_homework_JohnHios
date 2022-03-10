@@ -1,0 +1,171 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+__Cleaning & Extra dplyr Homework__
+
+In this homework you are going to use a dataset about movies from Kaggle.
+
+Copy over the data to your homework directory and read it in. Remember to load any packages you will be using.
+
+
+Load libraries
+```{r}
+library(tidyverse)
+library(janitor)
+
+```
+
+Read Data
+```{r}
+movies <- read_csv("movies.csv")
+
+glimpse(movies)
+```
+
+
+__Question 1.__
+
+After you’ve read in the data and assigned it to a variable with a useful name, investigate it. Write down some ideas for what you could do to further investigate/clean this data using what you’ve learned today (no need to code it though, just jot down thoughts and ideas). Feel free to also write down any general thoughts you get looking at the data - this task is just to get you thinking about data and data cleaning/prepping.
+
+
+__Ans 1.__
+
+1. Investigate the number of movies released per year
+2. Compare english speaking movies to non-english productions
+3. Group the movies by budget 
+
+
+
+__Question 2.__
+
+A lot of interesting stuff in there! But for now, we are only interested in the movies’ titles, their runtime as well as their budget. Select the three columns that contain this information and save them into a new variable called movies_selected. Hint: you will have to make a choice between original_title and title.
+
+
+__Ans 2.__
+
+```{r}
+movies_titles <- select(movies, original_title,  title) 
+#filter(movies_titles,is.na(original_title) | is.na(title))
+summarise(movies_titles, count_original_title = sum(is.na(original_title)), count_title = sum(is.na(title)))
+
+```
+
+The original_title and title variables don't have any missing values. It's ok to use either one in the below analysis.
+
+
+```{r}
+movies_selected <- select(movies, title,  runtime,  budget) 
+  movies_selected
+```
+
+
+
+
+__Question 3.__
+
+Ok, now take your subsetted data movies_selected, and count the number of missing values in each column.
+
+__Ans 3.__
+
+```{r}
+movies_selected %>% 
+  #filter(is.na(title)|is.na(runtime)| is.na(budget)) #%>% 
+  summarise(count_title = sum(is.na(title)), count_runtime = sum(is.na(runtime)), count_budget = sum(is.na(budget)))
+
+```
+
+
+__Question 4.__
+
+There’s not too many NAs, but there are actually quite a few movies with a runtime of 0 in this dataset. Since it’s impossible for a movie to have a runtime of 0, use the function na_if to convert runtimes of length 0 into NAs. Save this into a new variable called movies_runtime. Then count how many missing values there are now in the column runtime.
+
+
+__Ans 4.__
+
+Number of movies with zero runtime
+
+```{r}
+movies_selected %>% 
+  filter(runtime == 0) %>% 
+  summarise(count_of_zero_runtimes = n())
+
+```
+
+
+
+```{r}
+
+# Conversion of runtimes of length 0 into NAs
+
+movies_runtime <- movies %>% 
+  mutate(runtime = na_if(runtime, 0)) 
+
+
+# Calculation of total missing values in column runtime
+
+movies_runtime  %>%
+  filter(is.na(runtime)) %>% 
+  summarise(count_of_zero_runtimes = n())
+```
+
+The above value makes sense - it's the sum of the original 2 NA values plus the 35 length 0 runtime movies
+
+
+__Question 5.__
+
+Impute the missing values in runtime with the median runtime using coalesce and save this into a new variable called movies_imputed. There should now be no missing values in the column runtime - check this to make sure.
+
+
+__Ans 5.__
+
+```{r}
+
+# Impute the missing values in runtime with the median runtime
+movies_imputed <- movies_runtime %>% 
+  mutate(runtime = coalesce(runtime, median(runtime, na.rm = TRUE)))
+
+# Check for missing values in runtime column
+movies_imputed %>% 
+  filter(is.na(runtime)) %>% 
+  summarise(count_of_missing_value_runtimes = n())
+
+```
+
+No missing values as indicated above.
+
+
+__Question 6.__
+
+Finally, use the slice_min and slice_max functions on movies_imputed to get the movies with the 10 shortest and 10 longest runtimes.
+
+
+__Ans 6.__
+
+```{r}
+movies_imputed %>% 
+  slice_min(runtime, n = 10) 
+
+movies_imputed %>% 
+  slice_max(runtime, n = 10) 
+
+```
+
+
+__Question 7.__
+
+Using the if_else function, impute anything with a budget below $100 with the median budget. Overwrite your movies_imputed so it contains the new budget values.
+
+
+__Ans 7.__
+
+```{r}
+
+movies_imputed %>% 
+  mutate(
+    budget = if_else(budget < 100,  median(budget, na.rm = TRUE), budget)
+  )
+
+```
+
