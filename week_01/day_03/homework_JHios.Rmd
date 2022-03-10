@@ -24,6 +24,8 @@ movies <- read_csv("movies.csv")
 glimpse(movies)
 ```
 
+__MVP__
+
 
 __Question 1.__
 
@@ -76,6 +78,19 @@ movies_selected %>%
 
 ```
 
+Alternatively, use:
+```{r}
+
+movies_selected %>% 
+  summarise(across(.cols = everything(),
+                   .fns = ~sum(is.na(.x))))
+
+# the ~ means that we are creating our own home-brewed function (it can be a combination of built-in functions)
+# .cols and .fns are not needed in the argument section as long as the order of the input arguments does not change
+```
+
+
+
 
 __Question 4.__
 
@@ -106,7 +121,7 @@ movies_runtime <- movies %>%
 # Calculation of total missing values in column runtime
 
 movies_runtime  %>%
-  filter(is.na(runtime)) %>% 
+  #filter(is.na(runtime)) %>% 
   summarise(count_of_zero_runtimes = n())
 ```
 
@@ -169,3 +184,21 @@ movies_imputed %>%
 
 ```
 
+__Extension__
+
+
+__Question 1.__
+
+Using case_when, create a new column called budget_type and label budgets as follows:
+
+Budgets below 12 million as ‘Small budget’
+Budgets between 12 and 40 million as ‘Medium budget’
+Budgets 40 millions and above as ‘Big budget’
+Save this into a new variable called movie_budgets.
+
+Hint:
+
+
+__Question 2.__
+
+Take the original dataset with all the variables. Using across and where, summarise the number of missing values, first across all columns of type character, and then across all columns of type numeric.
