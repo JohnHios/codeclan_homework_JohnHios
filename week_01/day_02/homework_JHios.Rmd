@@ -1,113 +1,200 @@
 ---
-title: "R Notebook"
+title: "`Dplyr` Homework"
 output: html_notebook
 ---
 
-__Question 1.__
+The data for this homework comes from an Open Data Science website called Kaggle. Kaggle has many open source datasets for you to use and most of them come with code uploaded by other users showing different ways to explore the data. It is a great way to learn about data-wrangling and analysis and if you are interested then set up your own account and get going. 
+
+For this task we will make use of their **Starbucks Calorie** dataset. You can find out more information about each dataset and what each column represents \href{https://www.kaggle.com/starbucks/starbucks-menu}{https://www.kaggle.com/starbucks/starbucks-menu}, but we have put the version you need in CodeClanData under `drinks_content`. 
+
+
+
+# MVP
+
+<br>
+
+**Question 1.**
 
 Load in the dataset and have a look at it. What are the dimensions, variable types, variable names, etc.?
 
 
-__Ans 1.__
+**Ans 1.**
 
 ```{r}
+#load data
 library(tidyverse)
+```
 
+
+```{r}
+# Read data
 drinks_content <- read_csv("drinks_content.csv")
+
+#print data in console
 drinks_content
 ```
-Dimensions: 242 observations x 18 variables
-Variable types: characters (chr) and numerical (dbl)
-
-
-
-__Question 2.__
-
-Let’s first investigate the calories of different drinks. Select the variables Beverage_category, Beverage, Beverage prep and Calories from your data. Since we are interested in the calorie content, check if there are any NA values in the data, and drop them if there are.
-
-
-__Ans 2.__
 
 ```{r}
-drinks_content_calories <- select(drinks_content, Beverage_category, Beverage, Beverage_prep, Calories)
-#mutate(drinks_content_calories, Calories = is.na(Calories))
+# overall dimensions
+dim(drinks_content)
+```
+Tibble has 242 observations x 18 variables
 
-drinks_content_caloriesfalse <- filter(drinks_content_calories, is.na(Calories)) 
-drinks_content_caloriesfalse
+
+```{r}
+# variable names
+names(drinks_content)
+```
+
+```{r}
+# get an overview of the data 
+glimpse(drinks_content)
+```
+
+
+<br>
+
+**Question 2.**
+
+Let's first investigate the calories of different drinks. Select the variables `Beverage_category`, `Beverage`, `Beverage prep` and `Calories` from your data. 
+
+Since we are interested in the calorie content, check if there are any NA values in the data, and drop them if there are.   
+
+
+**Ans 2.**
+
+```{r}
+drinks_content %>% 
+  select(Beverage_category, Beverage, Beverage_prep, Calories) %>% 
+  filter(is.na(Calories)) %>% 
+  summarise(missing_calories_count = n())
+
 ```
 No NA data in Calories variable.
 
 
- Run the code above using pipes
- =====================================
+<br>
+
+**Question 3.**
+
+Create a new variable (column) called `calorie_diff`, which stores the difference between 135 calories (135 calories = 10 cubes of sugar!) and the calories in each drink.
+(hint: you'll want to subtract 135 from the calories to see which drink have more or less than 10 cups of sugar). 
+
+
+<br>
+
+**Ans 3.**
 
 ```{r}
-
-drinks_content_calories <- select(drinks_content, Beverage_category, Beverage, Beverage_prep, Calories)
-mutate(drinks_content_calories, Calories = is.na(Calories))
-
-drinks_content_caloriestrue <- filter(drinks_content_calories, !is.na(Calories)) 
-
-``` 
- 
-
-__Question 3.__
-
-Create a new variable (column) called calorie_diff, which stores the difference between 135 calories (135 calories = 10 cubes of sugar!) and the calories in each drink. (hint: you’ll want to subtract 135 from the calories to see which drink have more or less than 10 cups of sugar).
-
-
-__Ans 3.__
-
-```{r}
-mutate(drinks_content_calories, calorie_diff = Calories - 135)
+mutate(drinks_content, calorie_diff = Calories - 135, .after = 4)
 ```
 
+<br>
 
-__Question 4.__
+**Question 4.**
 
-Summarise the mean number of calories in each beverage_category. Which 3 category of drinks have the most calories? Which 3 drinks have the least? Write a small summary of your findings.
-
-
-__Ans 4.__
-
-```{r}
-drinks_content_calories_grouped <- group_by(drinks_content_calories, Beverage_category)
-
-drinks_content_calorie_count <- summarise(drinks_content_calories_grouped, calorie_count = n())
-
-#arrange(drinks_content_calorie_count, desc(calorie_count))
-#arrange(drinks_content_calorie_count, calorie_count)
-```
+Summarise the mean number of calories in each `beverage_category`. Which 3 category of drinks have the most calories? Which 3 drinks have the least? Write a small summary of your findings.  
 
 
+<br>
 
-Pipe solution to Question 4.
-
-The three beverage categories with the lowest average mean calorie content are:
+**Ans 4.**
 
 ```{r}
-drinks_mean_cals %>%
+drinks_mean_cals <- drinks_content %>% 
+  group_by(Beverage_category) %>% 
+  summarise(mean_cals = mean(Calories))
+
+
+# Tibble with 3 category of drinks with most calories 
+drinks_mean_cals %>% 
+  arrange(desc(mean_cals)) %>% 
+  head(3)
+
+
+# Tibble with 3 category of drinks with least calories
+drinks_mean_cals %>% 
   arrange(mean_cals) %>% 
-  tail(3)
+  head(3)
+
+```
+
+<br>
+
+**Question 5.**
+
+Let's look at this a different way. What is the average number of calories in each `Beverage_prep` type?    
+
+
+<br>
+
+**Ans 5.**
+
+```{r}
+drinks_content_bevprep_avg <- drinks_content %>% 
+  group_by(Beverage_prep) %>% 
+  summarise(mean_cals = mean(Calories)) %>% 
+  arrange(desc(mean_cals))
+
+drinks_content_bevprep_avg 
 ```
 
 
+<br>
+
+**Question 6.**
+
+Which `Beverage_prep` type contains more than the average calories of all drinks? 
+<details>
+<summary>**Hint**</summary>: to answer this, you'll have to first figure out what the average calories across all drinks are, and then use that as a filter for the grouped `Beverage_prep` data.
+</details>
+
+<br>
+
+**Ans 6.**
+
+```{r}
+#  calculate the average calories across all drinks
+drinks_content_avg_cals <- drinks_content %>% 
+  summarise(mean_cals = mean(Calories)) %>% 
+  pull()
+
+drinks_content_avg_cals
+
+# compare average calories across all drinks to grouped `Beverage_prep` data
+drinks_content_bevprep_avg %>% 
+  filter(mean_cals > drinks_content_avg_cals)
+
+```
 
 
-__Question 5.__
+<br>
 
-Let’s look at this a different way. What is the average number of calories in each Beverage_prep type?
+**Question 7.**
+
+Which is the best type of **coffee** drink (and by 'drink' we mean the combination of `Beverage_category`, `Beverage` and `Beverage_prep`) to get if you're worried about consuming too many calories? 
+
+<br>
+
+**Ans 7.**
+
+```{r}
+# Check if any type of coffee has the least calories
+drinks_content %>% 
+  select(Beverage_category, Beverage, Beverage_prep, Calories) %>% 
+  arrange(Calories)
+
+```
+Tazo Tea Drinks have the lowest calorific content, but they're not coffee - have to exempt them from analysis
+
+```{r}
+# Remove Tazo Tea Drinks in order to identify coffee with least calories
+drinks_content %>% 
+  filter(Beverage_category != "Tazo® Tea Drinks") %>% 
+  select(Beverage_category, Beverage, Beverage_prep, Calories) %>% 
+  arrange(Calories) %>% 
+  head(1)
+```
 
 
-
-__Question 6.__
-
-Which Beverage_prep type contains more than the average calories of all drinks?
-Hint
-: to answer this, you’ll have to first figure out what the average calories across all drinks are, and then use that as a filter for the grouped Beverage_prep data.
-
-
-__Question 7.__
-
-Which is the best type of coffee drink (and by ‘drink’ we mean the combination of Beverage_category, Beverage and Beverage_prep) to get if you’re worried about consuming too many calories?
 

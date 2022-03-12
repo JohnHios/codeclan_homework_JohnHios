@@ -85,7 +85,7 @@ movies_selected %>%
   summarise(across(.cols = everything(),
                    .fns = ~sum(is.na(.x))))
 
-# the ~ means that we are creating our own home-brewed function (it can be a combination of built-in functions)
+# the ~ means that we are creating our own home-brewed function - it's a lambda function (it can be a combination of built-in # functions)
 # .cols and .fns are not needed in the argument section as long as the order of the input arguments does not change
 ```
 
@@ -182,6 +182,7 @@ movies_imputed %>%
     budget = if_else(budget < 100,  median(budget, na.rm = TRUE), budget)
   )
 
+# there are no NAs in my dataset so no need to input na.rm = TRUE
 ```
 
 __Extension__
@@ -199,6 +200,28 @@ Save this into a new variable called movie_budgets.
 Hint:
 
 
+__Ans 1.__
+
+An alternative way of setting up the case_when logic of this question is below - check the role of TRUE in the logic statements:
+
+```{r}
+movie_budgets <- movies_imputed %>%
+  mutate(
+    budget_type = case_when(
+      budget < 12e6 ~ "Small budget",
+      budget < 40e6 ~ "Medium budget",
+      TRUE ~ "Big budget"
+      )
+    )
+
+movie_budgets
+
+```
+
+
 __Question 2.__
 
 Take the original dataset with all the variables. Using across and where, summarise the number of missing values, first across all columns of type character, and then across all columns of type numeric.
+
+
+__Ans 2.__
