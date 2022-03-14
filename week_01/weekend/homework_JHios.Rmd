@@ -1,0 +1,318 @@
+---
+title: "`dplyr` Weekend Homework"
+output: html_notebook
+---
+
+<br>
+
+As this is your first weekend homework, here are some tips: 
+
+* Try to schedule some time in your weekend to work on the homework so it's not suddenly Monday morning and you haven't gotten started yet (it happens).
+* Remember that the weekend homework is for your learning, so try to use it as an opportunity to apply and consolidate everything you've learned in the week.
+* Also use it as an opportunity to spend a bit more time making your code readable and reproducible, by practising commenting and writing some text around your steps and findings. You will thank yourself later! 
+  * This will be especially useful for this specific weekend homework as it's very open-ended and you will eventually forget your own thought process
+* A bit obvious, but don't spend your entire weekend working on the homework! Remember to spend time doing things you enjoy and rest up ahead of the following week.
+
+The data for this weekend homework is scraped from Goodreads (a website all about books) and made publicly available on Kaggle. You can read more about the data [here](https://www.kaggle.com/jealousleopard/goodreadsbooks).
+
+<br>
+
+# MVP
+
+
+<br>
+### First steps
+
+Load necessary packages and read in `books.csv`. Investigate dimensions, variables, missing values - you know the drill!
+
+<br>
+
+### Up to you
+
+Now it's up to you... For this weekend homework there will be no specific tasks, just you and this dataset! Using everything you've learned this week, try to describe/summarise at least 5 things about this dataset - using R and the tidyverse of course! Feel free to find and use new functions if there is something that the tidyverse doesn't offer, but do try to use this homework to apply what you have learned this week. Be prepared to share one of your findings on Monday!
+
+<br>
+### Remember
+
+Before you submit, go through your weekend homework and make sure your code is following best practices as laid out in the `coding_best_practice` lesson.
+
+
+<br>
+
+**Ans.**
+
+# 1. Data Viewing/Treatment of Missing Values
+
+```{r}
+# load libraries
+library(tidyverse)
+library(janitor)
+library(stringr)
+```
+
+```{r}
+books_raw <- read_csv("books.csv")
+```
+
+```{r}
+# get the dimensions
+dim(books_raw)
+
+# get variable names 
+names(books_raw)
+```
+```{r}
+# Use of janitor to clean names
+books_janitor_clean <- books_raw %>%
+  clean_names()
+
+books_janitor_clean %>%
+  names()
+```
+
+```{r}
+books_renamed <- books_janitor_clean %>%
+  rename("row_id" = "rowid", "isbn_13" = "isbn13")
+
+books_renamed %>%
+  names()
+```
+
+
+```{r}
+glimpse(books_renamed)
+```
+
+```{r}
+head(books_renamed)
+```
+
+
+The publication_date variable is a character although is should be a date class variable. The code below converts character object dates to class "date" objects:
+```{r}
+books_renamed_date_conv <- books_renamed %>%
+  select(row_id, book_id, title, publication_date) %>%
+  mutate(publication_date = as.Date(publication_date,"%m/%d/%Y"))
+
+books_renamed_date_conv
+```
+
+<br>
+
+Check for any NAs following date conversion:
+```{r}
+# total number of missing values (NA, NaN) across columns in dataset
+books_renamed_date_conv %>%
+  summarise(across(.cols = everything(), .fns = ~ sum(is.na(.x))))
+```
+
+<br>
+
+Identification of "date" objects with NA value:
+```{r}
+books_renamed_date_conv %>%
+  filter(is.na(publication_date))
+```
+
+<br>
+
+The date character values prior to conversion were:
+```{r}
+books_renamed %>% 
+  filter(row_id %in% c(8184, 11103)) %>% 
+  glimpse()
+```
+June and November have 30 days - that's why the corresponding publication_date values were NAs when converted to date class objects.
+
+The two missing dates will have no impact in the analysis below, therefore no action is required. 
+
+<br>
+
+The tibble used for the next stage of the analysis  is:
+```{r}
+books <- books_renamed %>% 
+  mutate(publication_date = as.Date(publication_date,"%m/%d/%Y"))
+
+books
+```
+
+<br>
+
+# 2. Rank Books by Average Rating
+
+The books may be ranked as follows:
+- 1-star ranking: average_rating %in% [0,1] (Poor)
+- 2-star ranking: average_rating %in% (1,2] (Below Average)
+- 3-star ranking: average_rating %in% (2,3] (Average)
+- 4-star ranking: average_rating %in% (3,4] (Above Average)
+- 5-star ranking: average_rating %in% (4,5] (Excellent)
+```{r}
+books %>% 
+  select(title, average_rating) %>% 
+  mutate(
+    book_ranking = case_when(
+      average_rating <=1 ~ "1-star: 0 <= average_rating <= 1",
+      average_rating <=2 ~ "2-star: 1 <  average_rating <= 2",
+      average_rating <=3 ~ "3-star: 2 <  average_rating <= 3",
+      average_rating <=4 ~ "4-star: 3 <  average_rating <= 4",
+      average_rating <=5 ~ "5-star: 4 <  average_rating <= 5",
+      TRUE               ~ "Error"
+    )
+  ) %>% 
+  group_by(book_ranking) %>% 
+  summarise(ranking_count = n())
+```
+
+The book ranking shows that the vast majority of books fall into the 4-star and 5-star category (highly recommended/ must-read books) 
+
+<br>
+
+Note that the books ranking 1-star  comprise of 25 books with zero rating and 2 books with rating equal to 1 (see below). Books with zero rating have also zero ratings count and zero text_reviews_count, so they are not necessarily bad books - they just have not been reviewed by anybody so far.
+
+```{r}
+# breakdown of 1-star ranking books
+books %>% 
+  filter(average_rating <= 1) %>% 
+  select(title, average_rating, ratings_count, text_reviews_count)
+```
+<br>
+
+There’s not too many NAs in this dataset. Since it is unlikely for a book to score an average rating of 0, function na_if will be used to  to convert zero ``average_rating`` values into NAs. A new variable called ``books_avg_rating`` will be created. Then count how many missing values there are now in the column`` average_rating`` (should be 25 values).
+
+```{r}
+books_avg_rating <- books %>%
+  mutate(average_rating = na_if(average_rating, 0))
+
+books_avg_rating %>% 
+  summarise(count = sum(is.na(average_rating)))
+
+```
+
+<br>
+
+Impute the missing values in ``average_rating`` with the median of all average rating values. 
+```{r}
+books_imputed <- books_avg_rating %>%  
+  mutate(average_rating = coalesce(average_rating, median(average_rating, na.rm = TRUE)))
+
+# pull the median of all average rating values 
+books_avg_rating %>%
+  summarise(meadian_avg_rating = median(average_rating, na.rm = TRUE)) %>% 
+  pull()
+
+# check for NAs in average_rating data (it should be 0)
+books_imputed %>% 
+  summarise(count = sum(is.na(average_rating)))
+```
+
+<br>
+
+# 3. Identify Books With The Highest And Lowest Average Ratings
+```{r}
+books_imputed %>% 
+  select(title, average_rating, publication_date, publisher) %>%
+  slice_max(average_rating, n = 10)
+```
+
+```{r}
+books_imputed %>% 
+  select(title, average_rating, publication_date, publisher) %>%
+  slice_min(average_rating, n = 10)
+```
+
+
+```{r}
+books_imputed %>% 
+  select(title, average_rating, publication_date, publisher) %>%
+  mutate(percentage_diff_from_median = 100*(average_rating - median(average_rating))/median(average_rating)) %>% 
+  arrange(desc(percentage_diff_from_median))
+```
+
+<br>
+
+# 4.  Languages used
+```{r}
+books_imputed %>% 
+  group_by(language_code) %>% 
+  summarise(book_count = n()) %>% 
+  arrange(desc(book_count))
+```
+
+<br>
+
+Count number of books in English (incl. Chaucer's work in Middle English)
+```{r}
+books_imputed %>% 
+  filter(language_code %in% c("eng", "en-US", "en-GB", "en-CA", "enm")) %>% 
+  summarise(english_book_count = n())
+```
+There vast majority of published works are in English.
+
+<br>
+
+Some Quirks:
+
+```{r}
+books_imputed %>% 
+  filter(language_code == "lat") 
+```
+
+```{r}
+books_imputed %>% 
+  filter(language_code == "gla") 
+```
+
+Harry Potter has been translated in Latin and Gaelic!
+
+
+
+```{r}
+books_imputed %>% 
+  filter(language_code == "grc") 
+```
+Publications in Greek refer only to works of classical antiquity.
+
+<br>
+
+# 5. Some Facts On Publications
+
+
+Publications of Educational Institutes.
+```{r}
+books_imputed %>% 
+  filter(str_detect(publisher, "University") | str_detect(publisher, "MIT") | str_detect(publisher, "College")) %>%
+  group_by(publisher) %>%
+  summarise(uni_count = n())
+
+```
+Oxford Uni is the busiest of all in the dataset.
+
+<br>
+
+Audio book publications:
+```{r}
+books_imputed %>% 
+  filter(str_detect(publisher, "Audio") | str_detect(publisher, "Tapes")) %>%
+  group_by(publisher) %>%
+  summarise(audio_count = n())
+  
+```
+
+In some audio books the ```num_pages``` is quite high, which is not expected. It is likely that those values correspond to the pages of the hard copy. 
+```{r}
+books_imputed %>% 
+  filter(str_detect(publisher, "Audio") | str_detect(publisher, "Tapes")) %>% 
+  select(title, num_pages)
+```
+
+<br>
+
+Comic Book Publications:
+```{r}
+books_imputed %>% 
+  filter(str_detect(publisher, "Marvel") | str_detect(publisher, "DC") | str_detect(publisher, "Comi")) %>%
+  group_by(publisher) %>%
+  summarise(uni_count = n())
+
+```
+Marvel and DC Comics dominate the comic book publication domain.
