@@ -1,0 +1,90 @@
+---
+title: "Lab - strings & regex"
+output: html_notebook
+ 
+---
+
+
+
+Regular Expression Practice
+
+It's time to look at regular expressions in the context of a much bigger block of text. Pull down the class notes and you'll find an R notebook with a long passage in it -- it's the first chapter of [1984](https://en.wikipedia.org/wiki/Nineteen_Eighty-Four). In that notebook, use regular expressions to answer/do the following:
+
+# MVP
+
+**Question 1.**  
+Are the Thought Police ever mentioned?
+
+<br>
+
+**Ans 1.**  
+
+
+<br>
+
+**Question 2.**  
+Count how often Big Brother is mentioned
+
+<br>
+
+**Ans 2.**  
+
+
+<br>
+
+**Question 3.**  
+The chapter is written from the point of view of the protagonist, Winston. Does he ever mention the other main character (Julia) by name?
+
+<br>
+
+**Ans 3.**  
+
+
+<br>
+
+**Question 4.**  
+Winston writes the date in a specific format: `month nth, year` eg. `August 5th, 2019`. Write a regular expression to match dates in that format and find the date written in his diary.
+
+<br>
+
+**Ans 4.**  
+
+
+<br>
+
+**Question 5.**  
+Winston wants some anonymity, redact his name somehow.
+
+<br>
+
+**Ans 5.**  
+
+<br>
+
+**Question 6.**  
+Stocks of Victory Gin have run out and the people of Oceania will have to drink vodka instead. Replace "gin" with "vodka", matching case wherever possible. There's still loads of Victory Coffee, though, so don't replace that.
+
+<br>
+
+**Ans 6.**  
+
+
+<br>
+
+**Question 7.**  
+Big Brother is rebranding and has decided that the various ministries will now be known as departments. The old departments are now called sections. The Newspeak titles will use "Dep" instead of "Mini".
+
+<br>
+
+**Ans 7.**  
+
+
+## Hints
+
+* Remember that you can use different functions to test your regular expressions before using them to change things.
+* If you make a change and want to undo it, you can always re-run the first code block to restore the original text
+* The order in which you do things will be important for some tasks!
+
+# Extension
+
+You may have noticed some repetition in these tasks. Try to find a programmatic way of making changes using functions.
