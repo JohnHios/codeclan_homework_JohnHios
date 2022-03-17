@@ -5,6 +5,7 @@ output: html_document
 
 ```{r}
 library(stringr)
+library(tidyverse)
 ```
 
 ```{r}
@@ -120,3 +121,150 @@ He sat back in his chair, slightly ashamed of himself, and laid down the pen. Th
 
 Already! He sat as still as a mouse, in the futile hope that whoever it was might go away after a single attempt. But no, the knocking was repeated. The worst thing of all would be to delay. His heart was thumping like a drum, but his face, from long habit, was probably expressionless. He got up and moved heavily towards the door."
 ```
+
+
+
+
+
+Regular Expression Practice
+
+It's time to look at regular expressions in the context of a much bigger block of text. Pull down the class notes and you'll find an R notebook with a long passage in it -- it's the first chapter of [1984](https://en.wikipedia.org/wiki/Nineteen_Eighty-Four). In that notebook, use regular expressions to answer/do the following:
+
+# MVP
+
+**Question 1.**  
+Are the Thought Police ever mentioned?
+
+<br>
+
+**Ans 1.** 
+
+```{r}
+pattern <- "Thought Police"
+
+whole_text %>% 
+  str_detect(pattern)
+```
+Yes, they are.
+
+<br>
+
+**Question 2.**  
+Count how often Big Brother is mentioned
+
+<br>
+
+**Ans 2.**  
+
+```{r}
+pattern <- "(?i)Big Brother"
+
+whole_text %>% 
+  str_count(pattern)
+```
+It occurs 20 times
+
+<br>
+
+**Question 3.**  
+The chapter is written from the point of view of the protagonist, Winston. Does he ever mention the other main character (Julia) by name?
+
+<br>
+
+**Ans 3.**  
+
+```{r}
+pattern <- "Julia"
+
+whole_text %>% 
+  str_detect(pattern)
+```
+No, he doesn't
+
+<br>
+
+**Question 4.**  
+Winston writes the date in a specific format: `month nth, year` eg. `August 5th, 2019`. Write a regular expression to match dates in that format and find the date written in his diary.
+
+<br>
+
+**Ans 4.**  
+```{r}
+pattern <- "[A-Z]{1}[a-z]+ [0-9]+[a-z]{2}, [0-9]{4}"
+
+whole_text %>% 
+  str_extract(pattern)
+```
+
+<br>
+
+**Question 5.**  
+Winston wants some anonymity, redact his name somehow.
+
+<br>
+
+**Ans 5.**  
+```{r}
+pattern <- "[W]{1}[a-z]+"
+
+whole_text %>% 
+  str_replace_all(pattern, "REDACTED")
+```
+
+
+<br>
+
+**Question 6.**  
+Stocks of Victory Gin have run out and the people of Oceania will have to drink vodka instead. Replace "gin" with "vodka", matching case wherever possible. There's still loads of Victory Coffee, though, so don't replace that.
+
+<br>
+
+**Ans 6.**  
+```{r}
+pattern <- "[ ,\\.-][gG][iI][nN][ ,\\.-]"
+  
+whole_text %>% 
+  str_extract_all(pattern) #%>% 
+  # flatten_chr()
+
+```
+
+
+```{r}
+whole_text %>% 
+  str_replace_all(c("Victory Gin" = "Victory Vodka", "VICTORY GIN" = "VICTORY VODKA", "victory gin" = "victory vodka", " gin" = " vodka"))
+```
+
+<br>
+
+**Question 7.**  
+Big Brother is rebranding and has decided that the various ministries will now be known as departments. The old departments are now called sections. The Newspeak titles will use "Dep" instead of "Mini".
+
+<br>
+
+**Ans 7.**  
+```{r}
+# exploration of effectiveness of my proposed pattern
+whole_text %>% 
+  str_extract_all("(?i)(Department|Ministry|Ministrie|Mini[a-z]+)")
+```
+
+
+```{r}
+# my clunky version
+whole_text %>% 
+  str_replace_all(c("Department" = "Section", "department" = "section")) %>% 
+  str_replace_all(c("Ministry" = "Department", "Ministries" = "Departments", "ministry" = "department", "ministries" = "departments")) %>% 
+  str_replace_all(c("Mini" = "Dep"))
+ 
+```
+
+## Hints
+
+* Remember that you can use different functions to test your regular expressions before using them to change things.
+* If you make a change and want to undo it, you can always re-run the first code block to restore the original text
+* The order in which you do things will be important for some tasks!
+
+# Extension
+
+You may have noticed some repetition in these tasks. Try to find a programmatic way of making changes using functions.
