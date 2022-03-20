@@ -29,70 +29,44 @@ library(janitor)
 ```
 
 ```{r}
-# read CardBase csv file
-card_base_raw <- read_csv("data/CardBase.csv")
-
-# show names
-names(card_base_raw)
-```
-```{r}
-# Use of janitor to clean names
-card_base <- card_base_raw %>%
+# read CardBase csv file and Use janitor to clean names
+card_base <- read_csv("data/CardBase.csv") %>% 
   clean_names()
 
-card_base %>%
-  names()
-```
-
-
-```{r}
-# read CustomerBase csv file
-customer_base_raw <- read_csv("data/CustomerBase.csv")
-
 # show names
-names(customer_base_raw)
+names(card_base)
+
 ```
 
+
 ```{r}
-# Use of janitor to clean names
-customer_base <- customer_base_raw %>%
+# read CustomerBase csv file and Use janitor to clean names
+customer_base <- read_csv("data/CustomerBase.csv") %>% 
   clean_names()
 
-card_base %>%
-  names()
-```
-```{r}
-# read FraudBase csv file
-fraud_base_raw <- read_csv("data/FraudBase.csv")
 
 # show names
-names(fraud_base_raw)
+names(customer_base)
 ```
 
 ```{r}
-# Use of janitor to clean names
-fraud_base <- fraud_base_raw %>%
+# read FraudBase csv file and Use janitor to clean names
+fraud_base <- read_csv("data/FraudBase.csv")%>% 
   clean_names()
-
-card_base %>%
-  names()
-```
-
-```{r}
-# read TransactionBase csv file
-transaction_base_raw <- read_csv("data/TransactionBase.csv")
 
 # show names
-names(transaction_base_raw)
+names(fraud_base)
 ```
 
+
+
 ```{r}
-# Use of janitor to clean names
-transaction_base <- transaction_base_raw %>%
+# read TransactionBase csv file and Use janitor to clean names
+transaction_base <- read_csv("data/TransactionBase.csv")%>% 
   clean_names()
 
-transaction_base %>%
-  names()
+# show names
+names(transaction_base)
 ```
 
 
@@ -103,7 +77,7 @@ Join the data containing card details and customer details by customer id, so th
 <br>
 **Ans. 2
 ```{r}
-inner_join(customer_base, card_base, "cust_id")
+left_join(card_base, customer_base, "cust_id")
 ```
 
 
@@ -114,7 +88,7 @@ Join the data containing fraud details with transaction details so all rows of b
 <br>
 **Ans. 3**
 ```{r}
-right_join(fraud_base, transaction_base, "transaction_id")
+full_join(fraud_base, transaction_base, "transaction_id")
 ```
 
 **Question 4**
@@ -123,6 +97,9 @@ Join the data containing card details with transaction details so rows from the 
 
 <br>
 **Ans. 4**
+```{r}
+semi_join(card_base, transaction_base, by = c("card_number" = "credit_card_id"))
+```
 
 
 <br>
@@ -135,13 +112,44 @@ Read in `hat_observations` and separate `observation` into two columns, `hat_col
 
 <br>
 **Ans. 5**
+```{r}
+# read hat_observations.csv file and Use janitor to clean names
+hat_observations <- read_csv("data/hat_observations.csv") %>% 
+  clean_names()
+
+
+# show names
+names(hat_observations)
+```
+
+```{r}
+# separate the observation variable into hat_colour and hat_type 
+hat_observations %>%
+  separate(observation, c("hat_colour", "hat_type"), sep = "," )
+
+```
+
 
 **Question 6**
 
 Unite `day`, `month`, and `year` columns into a column called `date` using a suitable separator. Then find the date where the most berets were observed.
 
+<br>
+**Ans. 6**
+```{r}
+# separate the observation variable into hat_colour and hat_type 
+# unite the day, month, year variables into a new one called date
+hat_observations %>%
+  separate(observation, c("hat_colour", "hat_type"), sep = "," ) %>% 
+  unite(date, c(day, month, year), sep = "-") %>% 
+  filter(hat_type == "beret") %>%
+  group_by(date) %>% 
+  summarise(total = sum(observation_count)) %>% 
+  slice_max(total, n = 1)
+```
 
 
+<br>
 # Extension
 
 ## Joins
@@ -153,14 +161,21 @@ Can you join all 4 datasets together so that you're left with a dataset that loo
 ![](images/all_joined.png)
 <br>
 **Ans. 1**
+```{r}
+card_base %>% 
+  inner_join(customer_base, by = "cust_id") %>% 
+  inner_join(transaction_base, by = c("card_number" = "credit_card_id")) %>% 
+  inner_join(fraud_base, by = "transaction_id")
+
+```
+
 
 ```{r}
-# new_data_table <- inner_join(join_ccard_cbase,
-#           join_cfraud_ctran, 
-#           by = c("card_number" = "credit_card_id")) %>% 
-#   filter( !is.na(fraud_flag))
+# My way
+# join_card_cust <- left_join(card_base, customer_base, "cust_id")
+# join_fraud_trans <- left_join(fraud_base, transaction_base, "transaction_id")
 # 
-# new_data_table
+# right_join(join_card_cust, join_fraud_trans, by = c("card_number" = "credit_card_id"))
 ```
 
 
@@ -172,3 +187,37 @@ Read in `exam_scores` and transform it into long format with two new columns `ex
 
 <br>
 **Ans. 2**
+```{r}
+# read exam_scores.csv file and Use janitor to clean names
+exam_scores <- read_csv("data/exam_scores.csv") %>% 
+  clean_names()
+
+
+# show names
+names(exam_scores)
+```
+
+
+```{r}
+# gather the question columns into a new one `exam_question` and associated scores in `score`
+exam_scores_long <- exam_scores %>%
+  pivot_longer(cols =  starts_with("exam_q"), 
+               names_to = "exam_question", 
+               values_to = "score")
+
+exam_scores_long
+```
+
+```{r}
+# separate the exam_question variable so you only have the question number 
+exam_question_separated <- exam_scores_long %>%
+  separate(exam_question, c("exam", "question"), sep = "q" ) %>% 
+  select(id, question, score)
+
+exam_question_separated
+```
+
+
+
+
+

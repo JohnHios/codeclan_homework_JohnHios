@@ -112,9 +112,9 @@ Write a function that pre-appends "The answer is: " to any character input, whil
 ```{r}
 # function definition
 my_input_func <- function(x){
-  if (is.character(x) == TRUE){
+  if (is.character(x)){
     return(paste("The answer is: ", x))
-  } else if (is.numeric(x) == TRUE){
+  } else if (is.numeric(x)){
       if (x < 10){
         return(x)
       }else if (x > 10){
@@ -305,6 +305,24 @@ cat("\n")
 ## Call function
 vector_check(x, y)
 
+####-----------------------------------
+
+cat("\n")
+cat("\n")
+
+# different num vectors
+x <- c(1:2)
+y <- c(1:4)
+
+cat("Input vectors:")
+cat("\n")
+cat('x <- c(1:2)')
+cat("\n")
+cat('y <- c(1:4)')
+cat("\n")
+cat("\n")
+## Call function
+vector_check(x, y)
 
 ```
 
