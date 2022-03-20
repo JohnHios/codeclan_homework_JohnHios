@@ -1,0 +1,86 @@
+---
+title: "Meteorites Weekend Homework - PDA"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    css: ../../../styles.css
+  pdf_document: default
+---
+
+# MVP
+
+For this weekend homework you will create a new PDA GitHub repo **with a README** that contains an R project with two pieces of code:
+
+1. An .R file that cleans some data on meteorites.
+2. A .Rmd file that takes your cleaned data and performs some analysis.
+
+Note: This repo will be were you push all your PDA work to, so call it something like `pda_firstname_lastname`. Make sure the repo is **private** and add relevant instructors to it as collaborators (On the repo page, Settings > Manage access > Add collaborator). You will still need to upload necessary evidence on Canvas, but this repo allows us to actually run your code if we need to! 
+
+You will also write a short `README.md` that describes the structure of your project.
+
+The data you want to clean is in the file called `meteorite_landings.csv`. It comes from NASA and has information on meteorites that have been found up to the year 2013. 
+
+## The .R file
+
+To clean the data please do the following.
+
+1. Read the data into R
+2. Change the names of the variables to follow our naming standards.
+3. Split in column `GeoLocation` into latitude and longitude, the new latitude and longitude columns should be numeric.
+4. Replace any missing values in latitude and longitude with zeros.
+5. Remove meteorites less than 1000g in weight from the data.
+6. Order the data by the year of discovery.
+
+We would also like you to include assertive programming to make sure that:
+
+1. The data has the variable names we expect ("id", "name", "mass (g)", "fall", "year", "GeoLocation").
+2. Latitude and longitude are valid values. (Latitude between -90 and 90, longitude between -180 and 180).
+
+## The .Rmd file
+
+In the .Rmd file please do the following.
+
+1. Read the cleaned data into R.
+2. Find the names and years found for the 10 largest meteorites in the data.
+3. Find the average mass of meteorites that were recorded falling, vs. those which were just found.
+4. Find the number of meteorites in each year, for every year since 2000.
+5. Write a function called `get_meteorite_count()` that takes in two arguments: a dataframe and a year, and returns the phrase "In (input_year), there were (number of meteorites that year) meteorites." IF there are 1 or more meteorites that year. If there are no meteorites in the year, return the phrase "As far as we know, there were no meteorites that year".
+6. Write down ideas for how the function you've written could be improved and how you could test that the function works as it should. Please keep these 'test plans' in the final .Rmd, especially if you are completing the PDA.
+7. Write a unit test for your function to check whether non-numeric inputs (character and logical) for the year argument return an error.
+8. Improve your function based on the result of your test. Instead of going back and changing the function, please create a new function that is the improved version called `refactor_get_meteorite_count()`. Test your function to make sure it now gives an error when you input a logical or character value as the year. **Hint:** You can use the `stop` function to create your own error message.
+
+## The project structure
+
+1. Make sure your use an RStudio Project.
+2. Make a new repo on GitHub (not your normal homework repo) and commit your code to this repo regularly - we will be checking the number of commits.
+3. It is up to you how to store your code and data. Make sure it is clear for others using the project.
+
+## The README.md file
+
+Make a file called `README.md`. In this file we just want you to describe the structure of your project, and write a general summary of your code.
+
+# PDA-specific Requirements
+
+## Outcomes covered by this homework
+
+**Please note:** You will be adding to this weekend homework in upcoming weeks to meet learning outcomes from the Programming for Data (J4YB 35) unit. The outcomes in bold should be covered this week, the rest will be added in week 3, week 5 and week 6. The outcomes should be covered by the tasks set, but if you're completing the PDA please use comments to annotate where each learning outcome is being evidenced and make sure you have met the required outcomes
+
+*3. Write functions and programs to perform data analysis*
+
+- **3.1 Writing function/program to process data from an external file** (loading in the data from a csv)
+- 3.2 Writing function/program to process data from a database
+- **3.3 Writing function/program to clean data** (part of your cleaning script)
+- **3.4 Writing function/program to wrangle data** (part of your cleaning script or any relevant data wrangling in your .Rmd)
+- **3.5 Writing function/program to perform statistical analysis** (calculation in .Rmd)
+- 3.6 Writing function/program to create visualisations
+- **3.7 Writing documentation for function/program** (the `README.md` that you create)
+ 
+*4. Test programs for data analysis*
+
+- **4.1 Test plans** (planning of the tests in task 6 in the .Rmd)
+- 4.2 Testing datasets
+- 4.3 Training datasets
+- **4.6 Performing test and revising code** (the unit test you perform and your new refactored function)
