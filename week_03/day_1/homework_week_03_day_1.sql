@@ -1,6 +1,6 @@
 /* MVP */
 
-/* Q1: Find all the employees who work in the ‘Human Resources’ department.*/
+/* Q1: Find all the employees who work in the ï¿½Human Resourcesï¿½ department.*/
 
 SELECT *
 FROM employees 
@@ -9,7 +9,7 @@ WHERE department = 'Human Resources';
 
 
 /* Q2: Get the first_name, last_name, and country of the employees who work in
- * the ‘Legal’ department.*/
+ * the ï¿½Legalï¿½ department.*/
 
 SELECT 
     first_name,
@@ -23,7 +23,7 @@ WHERE department = 'Legal';
 /* Q3: Count the number of employees based in Portugal.*/
 
 SELECT 
-    count(*) AS employees_in_portugal 
+    count(id) AS employees_in_portugal 
 FROM employees 
 WHERE country = 'Portugal';
 
@@ -32,7 +32,7 @@ WHERE country = 'Portugal';
 /* Q4: Count the number of employees based in either Portugal or Spain.*/
 
 SELECT 
-    count(*) AS employees_portugal_or_spain   
+    count(id) AS employees_portugal_or_spain   
 FROM employees 
 WHERE country = 'Portugal' OR country = 'Spain';
 
@@ -41,7 +41,7 @@ WHERE country = 'Portugal' OR country = 'Spain';
 /* Q5: Count the number of pay_details records lacking a local_account_no.*/
 
 SELECT *
-    --count(*) AS pay_details_wo_local_account
+    --count(id) AS pay_details_wo_local_account
 FROM pay_details  
 WHERE local_account_no IS NULL ;
 
@@ -51,7 +51,7 @@ WHERE local_account_no IS NULL ;
  * and iban number?*/
 
 SELECT 
-    count(*)  
+    count(id)  
 FROM pay_details AS pay_details_no_local_account_no_iban
 WHERE local_account_no IS NULL AND iban IS NULL;
 
@@ -107,16 +107,16 @@ LIMIT 1;
 
 
 
-/* Q11: How many employees have a first_name beginning with ‘F’? */
+/* Q11: How many employees have a first_name beginning with ï¿½Fï¿½? */
 
 SELECT 
-    count(*) AS first_name_starts_with_f 
+    count(id) AS first_name_starts_with_f 
 FROM employees 
 WHERE first_name ~ '^F';
 
 
 
-/* Q12: Find all the details of any employees with a ‘yahoo’ email address?*/
+/* Q12: Find all the details of any employees with a ï¿½yahooï¿½ email address?*/
 
 SELECT *
 FROM employees 
@@ -128,13 +128,13 @@ WHERE email  ~ '@yahoo';
  *  France or Germany.*/
 
 SELECT 
-    count(*) AS employees_pension
+    count(id) AS employees_pension
 FROM employees 
 WHERE pension_enrol NOTNULL AND country NOT IN ('France', 'Germany');
 
 
 
-/* Q14 :What is the maximum salary among those employees in the ‘Engineering’
+/* Q14 :What is the maximum salary among those employees in the ï¿½Engineeringï¿½
  *  department who work 1.0 full-time equivalent hours (fte_hours)? */
 
 SELECT *
@@ -165,9 +165,9 @@ FROM employees;
 /* Extension */
 
 /* Q16: The corporation wants to make name badges for a forthcoming conference.
- *  Return a column badge_label showing employees’ first_name and last_name 
+ *  Return a column badge_label showing employeesï¿½ first_name and last_name 
  * joined together with their department in the following style: 
- * ‘Bob Smith - Legal’. Restrict output to only those employees with stored 
+ * ï¿½Bob Smith - Legalï¿½. Restrict output to only those employees with stored 
  * first_name, last_name and department.
 */
 
@@ -175,28 +175,71 @@ SELECT
     first_name,
     last_name,
     department,
-    CONCAT(first_name, ' ', last_name, ' - ', department) AS badge_label 
+    CONCAT(
+        first_name, ' ', last_name, ' - ', department
+        ) AS badge_label 
 FROM employees
-WHERE first_name NOTNULL AND last_name NOTNULL AND department NOTNULL; 
+WHERE first_name IS NOT NULL AND
+      last_name IS NOT NULL AND
+      department IS NOT NULL; 
 
 
 
 /* Q17: One of the conference organisers thinks it would be nice to add the
- * year of the employees’ start_date to the badge_label to celebrate 
+ * year of the employeesï¿½ start_date to the badge_label to celebrate 
  * long-standing colleagues, in the following style 
- * ‘Bob Smith - Legal (joined 1998)’. Further restrict output to only those 
+ * ï¿½Bob Smith - Legal (joined 1998)ï¿½. Further restrict output to only those 
  * employees with a stored start_date.
-[If you’re really keen - try adding the month as a string: 
-‘Bob Smith - Legal (joined July 1998)’]
+[If youï¿½re really keen - try adding the month as a string: 
+ï¿½Bob Smith - Legal (joined July 1998)ï¿½]
 */
 
-/*?????????????????*/
+SELECT 
+    first_name,
+    last_name,
+    department,
+    start_date,
+CONCAT(
+    first_name, ' ', last_name, ' - ', department, ' (joined ', 
+       EXTRACT(YEAR FROM start_date), ')'
+       ) AS badge_label  
+FROM employees
+WHERE first_name IS NOT NULL AND
+      last_name IS NOT NULL AND
+      department IS NOT NULL AND 
+      start_date IS NOT NULL;
 
 
-
+ -- code for the keen
+ 
+SELECT 
+    first_name,
+    last_name,
+    department,
+    start_date,
+CONCAT(
+    first_name, ' ', last_name, ' - ', department, ' (joined ', 
+    TO_CHAR(start_date, 'FMMonth'), ' ', TO_CHAR(start_date, 'YYYY'), ')'
+) AS badge_label
+FROM employees
+WHERE 
+      first_name IS NOT NULL AND
+      last_name IS NOT NULL AND
+      department IS NOT NULL AND 
+      start_date IS NOT NULL; 
+  
 /* Q18: Return the first_name, last_name and salary of all employees together 
  * with a new column called salary_class with a value 'low' where salary is 
  * less than 40,000 and value 'high' where salary is greater than or equal
  * to 40,000.*/
-
-/*?????????????????*/
+      
+SELECT 
+    first_name,
+    last_name,
+    salary,
+    CASE 
+        WHEN salary < 40000 THEN 'low'
+        WHEN salary IS NULL THEN NULL
+        ELSE 'high' 
+    END AS salary_class
+FROM employees 
