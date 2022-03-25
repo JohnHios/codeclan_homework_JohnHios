@@ -153,7 +153,7 @@ movies_selected %>%
 
 ```{r}
 # Conversion of runtimes of length 0 into NAs
-movies_runtime <- movies %>% 
+movies_runtime <- movies_selected %>% 
   mutate(runtime = na_if(runtime, 0)) 
 
 
@@ -295,4 +295,3 @@ movies %>%
   summarise(across(where(is.numeric), ~sum(is.na(.x))))
   
 ```
-
