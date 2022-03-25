@@ -140,7 +140,7 @@ Are the Thought Police ever mentioned?
 **Ans 1.** 
 
 ```{r}
-pattern <- "Thought Police"
+pattern <- "[tT]hought [Pp]olice"
 
 whole_text %>% 
   str_detect(pattern)
@@ -174,7 +174,7 @@ The chapter is written from the point of view of the protagonist, Winston. Does 
 **Ans 3.**  
 
 ```{r}
-pattern <- "Julia"
+pattern <- "[jJ]ulia"
 
 whole_text %>% 
   str_detect(pattern)
@@ -190,7 +190,7 @@ Winston writes the date in a specific format: `month nth, year` eg. `August 5th,
 
 **Ans 4.**  
 ```{r}
-pattern <- "[A-Z]{1}[a-z]+ [0-9]+[a-z]{2}, [0-9]{4}"
+pattern <- "[A-Z][a-z]+ [0-9]+[a-z]{2}, [0-9]{4}"
 
 whole_text %>% 
   str_extract(pattern)
@@ -205,7 +205,7 @@ Winston wants some anonymity, redact his name somehow.
 
 **Ans 5.**  
 ```{r}
-pattern <- "[W]{1}[a-z]+"
+pattern <- "[wW]inston"
 
 whole_text %>% 
   str_replace_all(pattern, "REDACTED")
@@ -221,19 +221,33 @@ Stocks of Victory Gin have run out and the people of Oceania will have to drink 
 
 **Ans 6.**  
 ```{r}
+# find all possible occurrences of 'gin' in the text
 pattern <- "[ ,\\.-][gG][iI][nN][ ,\\.-]"
   
 whole_text %>% 
-  str_extract_all(pattern) #%>% 
-  # flatten_chr()
+  str_extract_all(pattern) %>% 
+  flatten_chr()
 
 ```
 
 
 ```{r}
-whole_text %>% 
-  str_replace_all(c("Victory Gin" = "Victory Vodka", "VICTORY GIN" = "VICTORY VODKA", "victory gin" = "victory vodka", " gin" = " vodka"))
+whole_text <- whole_text %>% 
+  str_replace_all(" GIN.", " VODKA.") %>%
+  str_replace_all(" gin.", " vodka.") %>%
+  str_replace_all(" gin ", " vodka ")
 ```
+
+
+```{r}
+# Run a check to confirm that nothing has been missed out
+pattern <- "[ ,\\.-][gG][iI][nN][ ,\\.-]"
+
+whole_text %>%
+  str_extract_all(pattern) %>%
+  flatten_chr()
+```
+
 
 <br>
 
@@ -251,12 +265,11 @@ whole_text %>%
 
 
 ```{r}
-# my clunky version
-whole_text %>% 
-  str_replace_all(c("Department" = "Section", "department" = "section")) %>% 
-  str_replace_all(c("Ministry" = "Department", "Ministries" = "Departments", "ministry" = "department", "ministries" = "departments")) %>% 
+whole_text %>%
+  str_replace_all(c("Department" = "Section")) %>%
+  str_replace_all(c("Ministry" = "Department", "Ministrie" = "Department")) %>%
   str_replace_all(c("Mini" = "Dep"))
- 
+
 ```
 
 ## Hints
@@ -268,3 +281,9 @@ whole_text %>%
 # Extension
 
 You may have noticed some repetition in these tasks. Try to find a programmatic way of making changes using functions.
+
+<br>
+
+**Ans**
+
+# ---
