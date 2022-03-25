@@ -40,10 +40,10 @@ Using the list you've just made find:
 ```{r}
 print("Chance of rain tomorrow (%)")
 weather_forecast_gla_3day$Thursday$chance_of_rain
-cat("\n")
+
 print("Wind speed on the day after tomorrow (knts)")
 weather_forecast_gla_3day$Friday$wind_speed
-cat("\n")
+
 print("Temperature tomorrow (Deg Celsius)")
 weather_forecast_gla_3day$Thursday$temperature
 ```
@@ -62,7 +62,7 @@ You will want to give a name to the matrix you create.
 **Ans 3.**
 ```{r}
 temperatures <- c(9, 12, 14, 12, 11, 12, 13, 13, 13, 13, 12, 11, 11, 10) # create a vector with temperature forecasts
-temperature_forecast_gla_14day <- matrix(temperatures, nrow = 2, ncol = 7, byrow = T)
+temperature_forecast_gla_14day <- matrix(temperatures, nrow = 2, ncol = 7, byrow = TRUE)
 
 print(temperature_forecast_gla_14day)
 ```
@@ -86,13 +86,12 @@ print("Third day of the second week")
 week <- 2
 day <- 3
 temperature_forecast_gla_14day[week, day]
-cat("\n")
 
 print("Whole second week")
 week <- 2
 day <- 1:7
 temperature_forecast_gla_14day[week, day]
-cat("\n")
+
 
 print("First, third and fifth days in both weeks")
 week <- c(1:2)
@@ -111,7 +110,7 @@ Write a function that pre-appends "The answer is: " to any character input, whil
 **Ans 5.**
 ```{r}
 # function definition
-my_input_func <- function(x){
+answ_divide_func <- function(x){
   if (is.character(x)){
     return(paste("The answer is: ", x))
   } else if (is.numeric(x)){
@@ -126,31 +125,33 @@ my_input_func <- function(x){
 }
 ```
 
+
+Testing:
 ```{r}
 # Test input
 my_input <- 1000 
 # Call function
-my_input_func(my_input)
+answ_divide_func(my_input)
 
 cat("\n")
 
 # Test input
 my_input <- 2 
 # Call function
-my_input_func(my_input)
+answ_divide_func(my_input)
 
 cat("\n")
 
 # Test input
 my_input <- 10 
 # Call function
-my_input_func(my_input)
+answ_divide_func(my_input)
 
 cat("\n")
 
 # Test input
 my_input <- "Character"
-my_input_func(my_input)
+answ_divide_func(my_input)
 
 ```
 
@@ -193,6 +194,7 @@ vector_check <- function(x, y){
   }
 ```
 
+Testing:
 ```{r}
 # Test inputs
 
@@ -212,115 +214,97 @@ vector_check(x, y)
 
 ####-----------------------------------
 
-cat("\n")
-cat("\n")
-
 # Same char vectors
 x <- c("cake", "lake", "fake", "take")
 y <- c("lake", "cake", "fake", "take")
 
 cat("Input vectors:")
-cat("\n")
+
 cat('x <- c("cake", "lake", "fake", "take")')
-cat("\n")
+
 cat('y <- c("lake", "cake", "fake", "take")')
-cat("\n")
-cat("\n")
+
 ## Call function
 vector_check(x, y)
 
 ####-----------------------------------
 
-cat("\n")
-cat("\n")
 
 # Different char vectors
 x <- c("foo", "bar", "fake", "take")
 y <- c("lake", "cake", "fake", "take")
 
 cat("Input vectors:")
-cat("\n")
+
 cat('x <- c("foo", "bar", "fake", "take")')
-cat("\n")
+
 cat('y <- c("lake", "cake", "fake", "take")')
-cat("\n")
-cat("\n")
+
+
 ## Call function
 vector_check(x, y)
 
 ####-----------------------------------
-
-cat("\n")
-cat("\n")
 
 # identical num vectors
 x <- c(1:4)
 y <- c(1:4)
 
 cat("Input vectors:")
-cat("\n")
+
 cat('x <- c(1:4)')
-cat("\n")
+
 cat('y <- c(1:4)')
-cat("\n")
-cat("\n")
+
 ## Call function
 vector_check(x, y)
 
 ####-----------------------------------
 
-cat("\n")
-cat("\n")
+
 
 # same num vectors
 x <- c(4:1)
 y <- c(1:4)
 
 cat("Input vectors:")
-cat("\n")
+
 cat('x <- c(4:1)')
-cat("\n")
+
 cat('y <- c(1:4)')
-cat("\n")
-cat("\n")
+
 ## Call function
 vector_check(x, y)
 
 ####-----------------------------------
 
-cat("\n")
-cat("\n")
 
 # different num vectors
 x <- c(3:6)
 y <- c(1:4)
 
 cat("Input vectors:")
-cat("\n")
+
 cat('x <- c(3:6)')
-cat("\n")
+
 cat('y <- c(1:4)')
-cat("\n")
-cat("\n")
+
 ## Call function
 vector_check(x, y)
 
 ####-----------------------------------
 
-cat("\n")
-cat("\n")
 
 # different num vectors
 x <- c(1:2)
 y <- c(1:4)
 
 cat("Input vectors:")
-cat("\n")
+
 cat('x <- c(1:2)')
-cat("\n")
+
 cat('y <- c(1:4)')
-cat("\n")
-cat("\n")
+
 ## Call function
 vector_check(x, y)
 
@@ -359,6 +343,13 @@ matrix_12x12
 
 ```
 
+Vector solution
+```{r}
+matrix_12x12 <- matrix(1:12) %*% t(matrix(1:12))
+matrix_12x12
+```
+
+
 
 <br>
 
@@ -379,17 +370,29 @@ You may want to use the function `cat()`. This is similar to `print()`, but prin
 
 **Ans 8.**
 ```{r}
-# define histogram
-hist_vector <- c("***", "*", "*******", "****", "**")
-
-
-for (i in 1:length(hist_vector)) {
-  cat(paste(i,"|"), hist_vector[i])
-  cat("\n")
+# define histogram function
+make_hist <- function(x){
+  
+  distinct <- sort(unique(x))
+  
+  
+  for (i in 1:length(distinct)) {
+    
+    freq_count <- sum(x == i)
+    
+    cat(paste(i,"|"), rep("*", freq_count))
+    
+    cat("\n")
+  }
+  
 }
 
-```
 
+vec_hist <- sample(1:5, size = 20, replace = TRUE) 
+
+make_hist(vec_hist)
+
+```
 
 
 
