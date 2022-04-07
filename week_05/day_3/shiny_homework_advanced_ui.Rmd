@@ -1,0 +1,20 @@
+---
+title: "Shiny - Advanced UI Homework"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    css: ../../../styles.css
+  pdf_document: default
+---
+
+# MVP 
+
+
+# Make an app of your choice
+
+We have uploaded a lot of data to the data folder within the server. Have a go at reading some data in, and making a simple app from it that picks out a key insight. It can be any layout you prefer, and can be as detailed design wise as you want. The main point is to find something interesting. 
+
+
