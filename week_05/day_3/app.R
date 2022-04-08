@@ -43,7 +43,8 @@ ui <- fluidPage(
                         value = 10)
         ),
 
-        # Show a plot of the generated distribution
+        # Show a plot of the monthly temperature data 
+        # and the generated distribution
         mainPanel(
            plotOutput("tsPlot"),
            plotOutput("distPlot")

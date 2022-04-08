@@ -1,0 +1,33 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(CodeClanData)
+```
+
+```{r}
+students_big <- CodeClanData::students_big
+```
+
+```{r}
+students_big %>% 
+glimpse()
+```
+
+
+```{r}
+students_big %>% 
+  filter(ageyears == 13) %>% 
+  ggplot(mapping = aes(x = height)) +
+  geom_histogram()
+
+
+students_big %>% 
+  filter(ageyears == 13) %>% 
+  ggplot(mapping = aes(x = arm_span)) +
+  geom_histogram()
+```
+

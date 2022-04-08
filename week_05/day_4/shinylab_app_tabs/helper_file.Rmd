@@ -1,0 +1,38 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(CodeClanData)
+```
+`
+
+```{r}
+students_big %>% 
+glimpse()
+```
+
+Histogram no.1 
+```{r}
+students_big %>%
+  filter(gender == "M") %>% 
+  filter(region == "Home Counties") %>% 
+  ggplot() +
+  geom_histogram(aes(x = importance_internet_access))
+ 
+```
+
+Histogram no.2 
+```{r}
+students_big %>%
+  filter(gender == "M") %>% 
+  filter(region == "Home Counties") %>% 
+  ggplot() +
+  geom_histogram(aes(x = importance_reducing_pollution))
+ 
+```
+
+
+

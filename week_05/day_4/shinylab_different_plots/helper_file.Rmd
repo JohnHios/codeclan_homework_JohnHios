@@ -1,0 +1,41 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(CodeClanData)
+```
+`
+
+```{r}
+students_big %>% 
+glimpse()
+```
+
+Bar
+```{r}
+students_big %>% 
+  ggplot(mapping = aes(x = handed, fill = gender)) +
+  geom_bar( position = "dodge")
+ 
+```
+
+Horizontal Bar
+```{r}
+students_big %>% 
+  ggplot() +
+  geom_bar(mapping = aes(x = handed, fill = gender), position = "dodge") +
+  coord_flip()
+```
+
+Stacked Bar
+```{r}
+students_big %>% 
+  ggplot() +
+  geom_bar(mapping = aes(x = handed, fill = gender))
+ 
+```
+
+

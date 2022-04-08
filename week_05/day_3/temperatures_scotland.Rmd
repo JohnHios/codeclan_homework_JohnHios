@@ -84,6 +84,16 @@ ggplot(mapping = aes(x = year, y = max_temp, colour = month)) +
   
 ```
 
+Plot the variability of max temperature for each month (years from 1910 to 2015) - ver. 3
+```{r}
+temp_sco %>% 
+ggplot(mapping = aes(x = year, y = max_temp, colour = month)) +
+  geom_line() 
+  
+```
+
+
+
 Plot the variability of max temperature for each month (years from 1910 to 2015)
 ```{r}
 temp_sco %>% 
@@ -115,7 +125,7 @@ Plot the max temperature distribution for each month (years from 1910 to 2015)
 ```{r}
 temp_sco %>% 
   ggplot(mapping = aes(x = max_temp, fill = year)) +
-  geom_histogram(binwidth = 0.5, col = "white")+
+  geom_histogram(binwidth = 1, col = "white")+
   # geom_histogram(bin = 25, col = "white")+
   facet_wrap(~ month, nrow = 4)
 
@@ -131,3 +141,5 @@ temp_sco %>%
   geom_line() +
   geom_point() 
 ```
+
+

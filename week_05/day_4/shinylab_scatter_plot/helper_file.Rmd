@@ -1,0 +1,28 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(CodeClanData)
+```
+`
+
+```{r}
+students_big %>% 
+glimpse()
+```
+
+
+```{r}
+
+students_big %>% 
+  ggplot(mapping = aes(x = reaction_time, y = score_in_memory_game)) +
+  geom_point(color= "blue", shape = as.integer("15"), size = 3, alpha = 0.5)+
+  labs(title = "Reaction Time vs. Memory Game")
+ 
+```
+
+
+
