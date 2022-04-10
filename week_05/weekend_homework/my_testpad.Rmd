@@ -1,0 +1,349 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+Load libraries
+```{r}
+library(tidyverse)
+library(janitor)
+library(CodeClanData)
+```
+
+
+
+View data
+```{r}
+game_sales
+```
+
+Short description of tibble
+```{r}
+str(game_sales)
+```
+
+```{r}
+glimpse(game_sales)
+```
+
+
+Check data  for NA values
+```{r}
+game_sales %>%
+  summarise(across(.cols = everything(),
+                   .fns = ~sum(is.na(.x))))
+
+```
+
+
+Descriptive summaries for numeric variables
+```{r}
+game_sales %>% 
+  select_if(is.numeric) %>% 
+  select(-year_of_release) %>% 
+  # summary()
+  psych::describe(fast = TRUE)
+```
+
+Check how many discrete game names exist
+```{r}
+game_sales %>% 
+  distinct(name) %>% 
+  nrow()
+```
+Check how many discrete genres exist
+```{r}
+game_sales %>% 
+  distinct(genre)
+```
+
+
+Check how many discrete years of release exist
+```{r}
+game_sales %>% 
+  distinct(year_of_release) %>% 
+  arrange(desc(year_of_release))
+```
+
+Check how many discrete publishers exist
+```{r}
+game_sales %>% 
+  distinct(publisher)
+```
+
+
+Check how many discrete developers exist
+```{r}
+game_sales %>% 
+  distinct(developer)
+```
+
+Check how many discrete ratings exist
+```{r}
+game_sales %>% 
+  distinct(rating)
+```
+
+
+Check how many discrete platforms exist
+```{r}
+game_sales %>% 
+  distinct(platform)
+```
+
+
+Top rated games by critics
+```{r}
+game_sales %>% 
+  select(name, genre, publisher, platform, critic_score) %>% 
+  slice_max(critic_score, n = 5)
+```
+
+```{r}
+game_sales %>%
+  filter(year_of_release == 2002) %>% 
+  select(name, critic_score, publisher) %>% 
+  slice_max(critic_score, n = 5) %>% 
+  ggplot()+
+  aes(x = reorder(name, critic_score), y = critic_score, fill = publisher)+
+  geom_bar(stat = "identity", position = "dodge") +
+  coord_flip()
+```
+
+
+Top rated games by users
+```{r}
+game_sales %>% 
+  select(name, genre, publisher, platform, user_score) %>% 
+  slice_max(user_score, n = 5)
+```
+
+```{r}
+game_sales %>%
+  filter(year_of_release == 2008) %>% 
+  select(name, user_score, publisher) %>% 
+  slice_max(user_score, n = 5) %>% 
+  ggplot()+
+  aes(x = reorder(name, user_score), y = user_score, fill = publisher)+
+  geom_bar(stat = "identity", position = "dodge") +
+  coord_flip()
+```
+
+
+
+Top selling games
+```{r}
+game_sales %>% 
+  select(name, genre, publisher, developer, sales, critic_score, user_score) %>% 
+  slice_max(sales, n = 10)
+```
+
+
+```{r}
+game_sales %>% 
+  filter(year_of_release == 2002) %>% 
+  select(name, sales, genre) %>% 
+  slice_max(sales, n = 5) %>% 
+  ggplot()+
+  aes(x = reorder(name, sales), y = sales, fill = genre)+
+  geom_bar(stat = "identity", position = "dodge") +
+  coord_flip()
+```
+
+Which platform has the most games?
+```{r}
+game_sales %>% 
+  group_by(platform) %>% 
+  summarise(game_number = n()) %>% 
+  arrange(desc(game_number))
+```
+
+```{r}
+game_sales %>% 
+  filter(year_of_release == 2002) %>% 
+  group_by(platform) %>% 
+  summarise(game_number = n()) %>% 
+  slice_max(game_number, n = 5) %>% 
+  ggplot()+
+  aes(x = reorder(platform, game_number), y = game_number)+
+  geom_bar(stat = "identity", position = "dodge") +
+  coord_flip()
+```
+
+
+Which publisher has published the most games?
+```{r}
+game_sales %>% 
+  group_by(publisher) %>% 
+  summarise(game_number = n()) %>% 
+  arrange(desc(game_number))
+```
+
+```{r}
+game_sales %>% 
+  filter(year_of_release == 2015) %>% 
+  group_by(publisher) %>% 
+  summarise(game_number = n()) %>% 
+  slice_max(game_number, n = 5) %>% 
+  ggplot()+
+  aes(x = reorder(publisher, game_number), y = game_number)+
+  geom_bar(stat = "identity", position = "dodge") +
+  coord_flip()
+```
+
+
+Which developer has developed the most games?
+```{r}
+game_sales %>% 
+  group_by(developer) %>% 
+  summarise(game_number = n()) %>% 
+  arrange(desc(game_number))
+```
+
+```{r}
+game_sales %>% 
+  group_by(developer) %>% 
+  filter(year_of_release == 2015) %>%
+  summarise(game_number = n()) %>% 
+  slice_max(game_number, n = 5) %>% 
+  ggplot()+
+  aes(x = reorder(developer, game_number), y = game_number)+
+  geom_bar(stat = "identity", position = "dodge") +
+  coord_flip()
+```
+
+
+
+Which publisher has the highest critic score rating on average?
+```{r}
+game_sales %>% 
+  group_by(publisher) %>% 
+  summarise(avg_crit_rating = mean(critic_score), avg_user_rating = mean(user_score)) %>%
+  arrange(desc(avg_crit_rating))
+```
+```{r}
+game_sales %>% 
+  filter(year_of_release == 2000) %>%
+  group_by(publisher) %>% 
+  summarise(avg_crit_rating = mean(critic_score), avg_user_rating = mean(user_score)) %>%
+  slice_max(avg_crit_rating, n = 5) %>% 
+  ggplot()+
+  aes(x = reorder(publisher, avg_crit_rating), y = avg_crit_rating)+
+  geom_bar(stat = "identity", position = "dodge") +
+  coord_flip()
+```
+
+
+
+
+Which publisher has the highest user score rating on average?
+```{r}
+game_sales %>% 
+  group_by(publisher) %>% 
+  summarise(avg_crit_rating = mean(critic_score), avg_user_rating = mean(user_score)) %>%
+  arrange(desc(avg_user_rating))
+```
+
+```{r}
+game_sales %>% 
+  filter(year_of_release == 2000) %>%
+  group_by(publisher) %>% 
+  summarise(avg_crit_rating = mean(critic_score), avg_user_rating = mean(user_score)) %>%
+  slice_max(avg_user_rating, n = 5) %>% 
+  ggplot()+
+  aes(x = reorder(publisher, avg_user_rating), y = avg_user_rating)+
+  geom_bar(stat = "identity", position = "dodge") +
+  coord_flip()
+```
+
+
+Which developer has the highest critic score rating on average?
+```{r}
+game_sales %>% 
+  filter(year_of_release == 2000) %>%
+  group_by(developer) %>% 
+  summarise(avg_crit_rating = mean(critic_score), avg_user_rating = mean(user_score)) %>%
+  arrange(desc(avg_crit_rating))
+```
+
+
+Which developer has the highest user score rating on average?
+```{r}
+game_sales %>% 
+  filter(year_of_release == 2000) %>%
+  group_by(developer) %>% 
+  summarise(avg_crit_rating = mean(critic_score), avg_user_rating = mean(user_score)) %>%
+  arrange(desc(avg_user_rating))
+```
+
+View number games released each year
+```{r}
+game_sales %>%
+  group_by(year_of_release) %>% 
+  summarise(game_number = n(), sales_number = sum(sales))
+```
+Plot histogram of game releases
+```{r}
+game_sales %>%
+  ggplot() +
+  aes(x = year_of_release) +
+  geom_bar()
+```
+
+Game sales per year
+```{r}
+game_sales %>%
+  group_by(year_of_release, genre) %>% 
+  summarise(sales_number = sum(sales))
+```
+
+Plot histogram of game sales
+```{r}
+game_sales %>%
+  group_by(year_of_release) %>% 
+  summarise(sales_number = sum(sales)) %>% 
+  ggplot() +
+  aes(x = year_of_release, y = sales_number) +
+  geom_bar(stat = "identity")
+```
+
+
+
+
+Check correlation btw critic score and user score
+```{r}
+game_sales %>%
+  ggplot(aes(x = user_score, y = critic_score)) +
+  geom_point() +
+  geom_smooth(method = "lm", show.legend = FALSE) +
+  xlim(0, 10) +
+  ylim(0, 100)
+```
+
+
+Correlation between releases and sales 
+```{r}
+game_sales %>%
+  group_by(year_of_release) %>% 
+  summarise(game_number = n(), sales_number = sum(sales)) %>% 
+  ggplot(aes(x = game_number, y = sales_number)) +
+  geom_point()  +
+  geom_text(
+    aes(label = year_of_release),
+    size = 3,
+    nudge_x = 6,
+    nudge_y = 1,
+  ) +
+  geom_smooth(method = "lm", show.legend = FALSE)+
+  xlim(0, 200) +
+  ylim(0, 250)
+  
+```
+
+
+
+
+
+
+
