@@ -241,10 +241,10 @@ qb_competitors %>%
   aes(x = Year, y = Revenue, colour = Company) +
   geom_line(size = 1) +
   geom_point(size = 2) +
-  labs(x = "Date", y = "Revenue (£)") + 
+  labs(x = "Date", y = "Sales (£)") + 
   theme_hwk_week05 +
   scale_colour_manual(values = col_scheme) +
-  ggtitle("QikBit Revenue and Costs", subtitle = "(2015 to 2019)")
+  ggtitle("Competitor Sales", subtitle = "(2015 to 2019)")
 ```
 
 

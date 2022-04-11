@@ -100,6 +100,7 @@ game_sales %>%
   slice_max(critic_score, n = 5)
 ```
 
+Plot the top 5 scoring games by critics for 2002
 ```{r}
 game_sales %>%
   filter(year_of_release == 2002) %>% 
@@ -118,7 +119,7 @@ game_sales %>%
   select(name, genre, publisher, platform, user_score) %>% 
   slice_max(user_score, n = 5)
 ```
-
+Plot the top 5 scoring games by users for 2008
 ```{r}
 game_sales %>%
   filter(year_of_release == 2008) %>% 
@@ -159,6 +160,8 @@ game_sales %>%
   arrange(desc(game_number))
 ```
 
+
+PLot platforms with the most games for 2022
 ```{r}
 game_sales %>% 
   filter(year_of_release == 2002) %>% 
@@ -167,7 +170,7 @@ game_sales %>%
   slice_max(game_number, n = 5) %>% 
   ggplot()+
   aes(x = reorder(platform, game_number), y = game_number)+
-  geom_bar(stat = "identity", position = "dodge") +
+  geom_bar(stat = "identity", fill = "steelblue") +
   coord_flip()
 ```
 
@@ -188,7 +191,7 @@ game_sales %>%
   slice_max(game_number, n = 5) %>% 
   ggplot()+
   aes(x = reorder(publisher, game_number), y = game_number)+
-  geom_bar(stat = "identity", position = "dodge") +
+  geom_bar(stat = "identity", position = "dodge", fill = "steelblue") +
   coord_flip()
 ```
 
@@ -209,7 +212,7 @@ game_sales %>%
   slice_max(game_number, n = 5) %>% 
   ggplot()+
   aes(x = reorder(developer, game_number), y = game_number)+
-  geom_bar(stat = "identity", position = "dodge") +
+  geom_bar(stat = "identity", position = "dodge", fill = "steelblue") +
   coord_flip()
 ```
 
@@ -230,7 +233,7 @@ game_sales %>%
   slice_max(avg_crit_rating, n = 5) %>% 
   ggplot()+
   aes(x = reorder(publisher, avg_crit_rating), y = avg_crit_rating)+
-  geom_bar(stat = "identity", position = "dodge") +
+  geom_bar(stat = "identity", position = "dodge", fill = "steelblue") +
   coord_flip()
 ```
 
@@ -253,7 +256,7 @@ game_sales %>%
   slice_max(avg_user_rating, n = 5) %>% 
   ggplot()+
   aes(x = reorder(publisher, avg_user_rating), y = avg_user_rating)+
-  geom_bar(stat = "identity", position = "dodge") +
+  geom_bar(stat = "identity", position = "dodge", fill = "steelblue") +
   coord_flip()
 ```
 
@@ -288,7 +291,7 @@ Plot histogram of game releases
 game_sales %>%
   ggplot() +
   aes(x = year_of_release) +
-  geom_bar()
+  geom_bar(fill = "steelblue")
 ```
 
 Game sales per year
@@ -305,7 +308,7 @@ game_sales %>%
   summarise(sales_number = sum(sales)) %>% 
   ggplot() +
   aes(x = year_of_release, y = sales_number) +
-  geom_bar(stat = "identity")
+  geom_bar(stat = "identity", fill = "steelblue")
 ```
 
 
