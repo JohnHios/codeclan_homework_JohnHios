@@ -1,0 +1,302 @@
+---
+title: "Probability Homework"
+output: html_notebook
+---
+
+
+# MVP
+
+## The Titanic
+
+```{r, echo=FALSE, fig.cap="**Fig. 1.** The RMS Titanic leaving Southport, 10th April 1912 (public domain)", out.width = '60%'}
+knitr::include_graphics("images/RMS_Titanic.jpg")
+```
+
+A data set detailing the survival or death of passengers and crew members on the RMS Titanic is given in the `data` folder for this homework - use this data and **not** the built-in `Titanic` dataset in `R`. 
+
+Some time after the disaster a journalist wrote that crew members were *more likely* to have survived the sinking than passengers. This was disputed by a descendant of one of the surviving crew members, who suggested that the opposite was true, i.e. passengers were *more likely* to have survived than crew.  
+
+**Question**  
+Calculate the conditional probabilities $\textrm{prob}(\textrm{survived} \mid \textrm{crew})$ and $\textrm{prob}(\textrm{survived} \mid \textrm{passenger})$ to settle this dispute.
+
+Have a look at the distinct values of the `class` variable, this will tell you whether each individual was a passenger (1st, 2nd or 3rd class) or a member of the crew (treat restaurant staff as crew)
+
+**Loading packages**
+
+You may want to use `prob` and `gtools` later in the homework, and the `tidyverse` for this section, but if you load `prob` after `tidyverse`, `dplyr::filter()` will be masked. So load your packages in this order:
+
+```{r, message = FALSE}
+library(prob)
+library(gtools)
+library(tidyverse)
+```
+
+<details>
+<summary>**Hints**</summary>
+
+* You may want to create a `crew` column containing values `TRUE` or `FALSE` to help with this
+* For $\textrm{prob}(\textrm{survived} \mid \textrm{crew})$ think 'what proportion of the crew survived?', and similar for $\textrm{prob}(\textrm{survived} \mid \textrm{passenger})$ 
+</details>
+<br>
+
+<br>
+
+
+<br>
+**Ans **
+
+Load libraries:
+```{r}
+library(prob)
+library(gtools)
+library(tidyverse)
+```
+
+View data:
+```{r}
+titanic <- read_csv("data/titanic.csv")
+
+glimpse(titanic)
+```
+
+Pull classes:
+```{r}
+titanic %>% 
+  distinct(class) %>% 
+  pull()
+```
+
+Pull survival rating:
+```{r}
+titanic %>% 
+  distinct(survived) %>% 
+  pull()
+```
+
+
+Calculate prob(survived|crew) and prob(survived|passenger) 
+```{r}
+#prob(survived|crew) calculation  
+titanic %>% 
+  mutate(crew = if_else(class %in% c("engineering crew",
+                                     "victualling crew", 
+                                     "restaurant staff",
+                                     "deck crew"), 
+                        TRUE, 
+                        FALSE)) %>% 
+  filter(survived == "yes" & crew == TRUE) %>% 
+  summarise(prob_surv_crew = n() / nrow(titanic))
+
+
+#prob(survived|passenger) calculation
+titanic %>% 
+  mutate(crew = if_else(class %in% c("engineering crew",
+                                     "victualling crew", 
+                                     "restaurant staff",
+                                     "deck crew"), 
+                        TRUE, 
+                        FALSE)) %>% 
+  filter(survived == "yes" & crew == FALSE) %>% 
+  summarise(prob_surv_passenger = n() / nrow(titanic))
+```
+
+Conclusion: Passengers in the Titanic had more than twice chances to have survived than the crew.
+
+<br>
+
+## Probability Consolidation Questions
+
+Today was pretty full-on! Here are some problems to help you consolidate what you learned. Feel free to work on paper or in `R`, whichever you are most comfortable with:
+
+**MVP - try _four_ of the problems**  
+**Extension - try more than four!**
+
+<br>
+**Question 1.**  
+If I roll a six-sided dice once, what is the probability of getting a number less than 5?
+<br>
+**Ans 1.** 
+```{r}
+s_one_die <- rolldie(1)
+
+s_one_die %>% 
+  dplyr::filter(X1 < 5) %>% 
+  summarise(prob = n() / nrow(s_one_die))
+
+```
+
+
+<br>
+**Question 2.**  
+How many outcomes are there in the sample space of an experiment in which we toss three dice?
+<br>
+**Ans 2.** 
+```{r}
+s_three_dice <- rolldie(3)
+
+s_three_dice %>% 
+  summarise(size_of_sample = n())
+```
+
+<br>
+
+**Question 3.**  
+In an experiment where we roll four dice:
+
+  * how many outcomes are in the event where the total of the four dice equals $5$, $6$ or $7$)?
+  * what is the probability of this event?
+  * what assumptions do we apply in answering part ii?
+  
+<details>
+<summary>**Hint**</summary>
+For part i, `rowSums(.)` may help you setup up the necessary random variable `total` (or you can use `pivot_longer()`)
+</details>
+<br>
+**Ans 3.** 
+```{r}
+# sample space for roll of four dice
+s_four_dice <- rolldie(4)
+
+# event space for a roll of four dice equal to 5, 6 or 7
+s_four_dice %>%
+  mutate(total = rowSums(.)) %>% # equal to coding: total = X1 + X2 + X3 + X4
+  dplyr::filter(total %in% c(5, 6, 7)) %>%
+  summarise(size_of_event_space = n())
+
+# probability for a roll of four dice equal to 5, 6 or 7
+s_four_dice %>%
+  mutate(total = rowSums(.)) %>%
+  dplyr::filter(total %in% c(5, 6, 7)) %>% 
+  summarise(prob = n() / nrow(s_four_dice))
+
+# The above probability assumes that the dice rolls are independent
+```
+
+
+
+<br>
+
+**Question 4.**  
+Five chairs are placed in a row in a room, along with five people of differing height. The people sit down randomly on the chairs. What is the probability that they sit in order of decreasing height, left to right?
+
+<details>
+<summary>**Hint**</summary>
+This is an arrangement where order matters. Of all the possible arrangements, how many are correct?
+</details>
+<br>
+**Ans 4.** 
+```{r}
+# create vector of increasing heights - contains 5 people, n = 5. 
+heights <- c(1:5)
+
+# Choose all five people at a time, r = 5
+# Don't replace a person once chosen: repeats.allowed = FALSE
+chairs <- as_tibble(permutations(n = 5, r = 5, v = heights, repeats.allowed = FALSE))
+
+# rename the variables in chairs to something better
+chairs <- chairs %>%
+  rename(
+    chair1 = V1,
+    chair2 = V2,
+    chair3 = V3,
+    chair4 = V4,
+    chair5 = V5
+  )
+
+# let's see what the chairs matrix looks like
+chairs
+
+# Get the event space (filter) and then calculate the prob (summarise)
+chairs %>%
+  filter(chair1 == 5, chair2 == 4, chair3 == 3, chair4 == 2, chair5 == 1) %>% 
+  summarise(prob = n() / nrow(chairs))
+```
+
+
+<br>
+**Question 5.**  
+I roll six dice:
+
+  * what is the probability I see the numbers 6, 5, 4, 3, 2 and 1 in order on the dice, left to right?
+  * what is the probability I see one each of the numbers 6, 5, 4, 3, 2 and 1 on the dice regardless of order?
+  
+<details>
+<summary>**Hint**</summary>
+Have a look at the `isin()` function in the `prob` package. For example, to `filter` all rows containing $6$, $1$, $2$ in that order, you could use `isin(., c(6, 1, 2), ordered = TRUE)`
+</details>
+<br>
+**Ans 5.** 
+```{r}
+# create vector of increasing die numbers - contains 6 dice, n = 6. 
+dice_event <- c(1:6)
+
+# Roll all six dice at a time, r = 6
+# repeats.allowed = TRUE
+dice <- as_tibble(permutations(n = 6, r = 6, v = dice_event, repeats.allowed = TRUE))
+
+# rename the variables in dice to something better
+dice <- dice %>%
+  rename(
+    die1 = V1,
+    die2 = V2,
+    die3 = V3,
+    die4 = V4,
+    die5 = V5,
+    die6 = V6
+  )
+
+# let's see what the dice matrix looks like
+dice
+
+# Get the event space (filter) and then calculate the prob (summarise) of seeing
+# the numbers 6, 5, 4, 3, 2 and 1 in order on the dice, left to right
+dice %>%
+  filter(isin(., c(6:1), ordered = TRUE)) %>% 
+  summarise(prob_ordered = n() / nrow(dice))
+
+# Get the event space (filter) and then calculate the prob (summarise) of seeing
+# each of the numbers 6, 5, 4, 3, 2 and 1 on the dice regardless of order
+dice %>%
+  filter(isin(., c(6:1), ordered = FALSE)) %>% 
+  summarise(prob_order_not_matter = n() / nrow(dice))
+```
+
+<br>
+**Question 6.**  
+If I draw a single card from a 52-card deck, and it is black, what is the probability that its suit is spades? <br>
+
+<details>
+<summary>**Hints**</summary>
+
+* Investigate the `cards()` function in the `prob` package, if you'd like to try this in R (make a deck without jokers). 
+* You could think about adding your own `black_card` random variable to the sample space, which would be `TRUE` if the `suit` is 'Spade' or 'Club', and `FALSE` otherwise.
+</details>
+<br>
+**Ans 6.** 
+-
+```{r}
+deck <- cards(jokers = FALSE, makespace = FALSE)
+
+prob_black <- deck%>% 
+  mutate(black_card = suit == "Spade" | suit == "Club") %>% 
+  filter(black_card == TRUE) %>% 
+  summarise(prob_black = sum(black_card) / nrow(deck)) %>% 
+  pull()
+
+prob_spade_and_black <- deck%>% 
+  mutate(black_card = suit == "Spade" | suit == "Club") %>% 
+  filter(suit == "Spade" & black_card == TRUE) %>% 
+  summarise(prob_spade_and_black = n() / nrow(deck))%>% 
+  pull()
+
+
+prob_spade_given_black = prob_spade_and_black / prob_black
+
+prob_spade_given_black
+```
+
+<br>
+
+# Extension
+
+Answer more than 4 consolidation questions
