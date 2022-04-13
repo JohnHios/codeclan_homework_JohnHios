@@ -1,0 +1,216 @@
+---
+title: "Disributions Homework"
+date: "12/04/2022"
+output: html_notebook
+---
+
+
+You are given a cut of a database containing details of mobile phones and their customer reviews on an online shopping site in file `20190928-items.csv`. Each row in the data corresponds to one model of mobile phone. Use the data to answer the following questions.  
+
+As part of the MVP we want you not to just run the code but also have a go at **intepreting the results** - this is the **main learning objective** from this homework. Don't worry if you aren't sure, it's ok to get it wrong, but give it a go, through trying we will learn. 
+
+# MVP
+
+
+**Question 1.**  
+Load the data, `clean_names()` and explore it.
+
+<br>
+
+**Ans 1.**
+Load libraries
+```{r}
+library(tidyverse)
+library(janitor)
+library(e1071)
+library(skimr)
+```
+
+
+```{r}
+mobile_phones <- read_csv("data/20190928-items.csv") %>% 
+  clean_names()
+
+glimpse(mobile_phones)
+
+```
+
+Check data  for NA values
+```{r}
+mobile_phones %>%
+  summarise(across(.cols = everything(),
+                   .fns = ~sum(is.na(.x))))
+
+```
+
+
+Check how many brands are in tibble
+```{r}
+mobile_phones %>% 
+  distinct(brand) %>% 
+  distinct()
+```
+
+
+
+<br>
+
+**Question 2.**  
+Find the brand with the highest numbers of phones in the dataset.
+
+<br>
+
+**Ans 2.**
+```{r}
+mobile_phones %>% 
+  group_by(brand) %>% 
+  summarise(mobile_count = n()) %>%
+  slice_max(mobile_count)
+```
+
+
+<br>
+
+**Question 3.**  
+For your top brand, plot the distribution of phone ratings as a probability density, overlaying a fitted normal distribution. Do you think the normal distribution provides a good model of these ratings?<br>
+<details>
+<summary>**Hint**</summary>
+You will need to calculate the `mean()` and `sd()` of the ratings to plot the appropriate normal distribution. Alternatively, investigate using the `fitdistr()` function in the `MASS` package]
+</details>
+<br>
+
+**Ans 3.**
+
+Calculate mean and sd for Samsung ratings:
+```{r}
+samsung_stats <- mobile_phones %>%
+  filter(brand == "Samsung") %>%
+  summarise(
+    mean = mean(rating),
+    median = median(rating),
+    sd = sd(rating)
+  )
+samsung_stats
+```
+
+Fit a normal distribution to the Samsung data set:
+```{r}
+mobile_phones %>%
+  filter(brand == "Samsung") %>%
+  ggplot(aes(x = rating)) +
+  geom_histogram(aes(y = ..density..), col = "white", binwidth = 0.2) +
+  stat_function(
+    fun = dnorm, 
+    args = list(
+      mean = samsung_stats$mean, 
+      sd = samsung_stats$sd
+    ),
+    col = "red"
+  )
+```
+
+
+Conclusion: The normal distribution provides an adequate model for the Samsung ratings. However, the general performance of the normal distribution model can be undermined by the presence of outliers in the mobile phone ratings. 
+
+A check for outliers in the Samsung data (see code chunk below) shows that the lowest ratings (rating = 1) are lying below three standard deviations from the mean.
+
+```{r}
+samsung_ratings <- mobile_phones %>%
+    filter(brand == "Samsung") %>%
+    select(rating) %>% 
+    mutate(z_rating = scale(rating))
+
+
+samsung_ratings %>%
+  filter(!between(z_rating, left = -3, right = 3))
+```
+
+
+<br>
+
+**Question 4.**  
+We can be more quantitative in comparing the distribution of top brand ratings with a normal distribution. You calculated the `mean()` and `sd()` of your distribution in an earlier question. Use these values to calculate the *proportions* of ratings within one-, two- and three standard deviations of the mean. Compare these proportions with those you expect for a normal distribution.  
+
+<details>
+<summary>**Hint**</summary>
+You can use a `filter()` to get only the ratings within one-, two- and three standard deviations of the mean, and then think about how to calculate what proportion each of these filtered sets make of the total number of ratings. You'll need to use three separate `filter()` and `summarise()` pipes to do this.
+</details>
+
+<details>
+<summary>**Further hint - code to filter within one SD**</summary>
+Here's the code to filter and summarise the proportion of ratings within one standard deviation of the mean.
+```{r, eval=FALSE}
+samsung_ratings %>%
+  filter(rating >= samsung_stats$mean - samsung_stats$sd) %>%
+  filter(rating <= samsung_stats$mean + samsung_stats$sd) %>%
+  summarise(prop_within_1sd = n() / nrow(samsung_ratings))
+```
+</details>
+
+<br>
+
+**Ans 4.**
+
+Use the empirical 3 $\sigma$ rule to determine if the normal distribution provides a good model of these ratings. The one-, two- and three standard deviations off the mean values are calculated within the for-loop below: 
+```{r}
+
+for (times_sd in 1:3){
+  
+  # percentage calculation of normally distributed values lying within 
+  # one-, two- and three standard deviations of the mean
+  
+  ndist_prob_percent <- 100* (pnorm(q = times_sd) - pnorm(q = -times_sd) )
+
+  print(
+    paste(
+      "For normally distributed data,", 
+      format(round(ndist_prob_percent, 1), nsmall = 1), "%",
+      "of the observations should fall between +/-", times_sd, 
+      "x (standard deviation)"
+    )
+  )
+  
+  
+  # percentage calculation of Samsung data lying within 
+  # one-, two- and three standard deviations of the mean
+  
+  samsung_ratings <- mobile_phones %>%
+    filter(brand == "Samsung") %>%
+    select(rating) %>% 
+    mutate(z_rating = scale(rating))
+  
+  count <- samsung_ratings %>% 
+    filter(between(z_rating, left = -times_sd, right = times_sd)) %>% 
+    nrow()
+  
+  samsung_percent <- 100* count / nrow(samsung_ratings)
+  
+  print(
+    paste(
+      "For the Samsung data,", 
+      format(round(samsung_percent, 1), nsmall = 1), "%",
+      "of the observations fall between +/-", times_sd, 
+      "x (standard deviation)"
+    )
+  )
+
+cat("\n")
+
+}
+
+```
+
+
+<br>
+
+# Extension
+
+Investigate the use of the `qqnorm()` plot in R to determine whether data is normally distributed. What is a 'quantile-quantile plot'? What do we expect to see in a `qqnorm()` plot if data is nearly normally distributed?
+
+Here are a few resources:
+
+* [Understanding QQ plots](https://data.library.virginia.edu/understanding-q-q-plots/)
+* [Short video tutorial](https://www.youtube.com/watch?v=Erze9pNIX8A) (the presenter doesn't use RStudio, but the commands are the same. Just ignore the final comments on hypothesis tests for now.)
+* [Longer video tutorial](https://www.youtube.com/watch?v=smJBsZ4YQZw)
+* [Quantile-Quantile plots - R Base Graphs](http://www.sthda.com/english/wiki/qq-plots-quantile-quantile-plots-r-base-graphs)
+
