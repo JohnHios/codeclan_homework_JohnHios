@@ -72,18 +72,26 @@ Compute and visualise a bootstrap sampling distribution for the `mean(lot_area)`
 
 **Ans 3. **
 ```{r}
-sample_200 <- ames %>%
-  rep_sample_n(size = 200, reps = 1)
+bootstrap_sample <- ames %>%
+  rep_sample_n(size = nrow(ames), replace = TRUE, reps = 1000) %>% 
+  summarise(
+    mean_lot_area = mean(lot_area)
+  )
 
-sample_200
+bootstrap_sample 
 ```
 
 ```{r}
-summary_sample_200 <- sample_200 %>%
-  ungroup() %>%
-  summarise(mean_lot_area = mean(lot_area)) 
+bootstrap_sample %>% 
+  ggplot(aes(x = mean_lot_area)) +
+  geom_histogram(col = "white", fill = "steel blue", alpha = 0.7)
+```
 
-summary_sample_200
+```{r}
+summary_sample <- bootstrap_sample %>%
+  summarise(mean_lot_area = mean(mean_lot_area)) 
+
+summary_sample
 ```
 
 
@@ -97,8 +105,8 @@ Use your bootstrap distribution to calculate a $95\%$ CI for `mean(lot_area)`, a
 **Ans 4. **
 ```{r}
 # specify that we want to look at tenure variable, 1000 reps, and want to calculate the mean
-infer_resample <- sample_200 %>%
-  specify(response = lot_area) %>%
+infer_resample <- bootstrap_sample %>%
+  specify(response = mean_lot_area) %>%
   generate(reps = 1000, type = "bootstrap") %>%
   calculate(stat = "mean")
 
