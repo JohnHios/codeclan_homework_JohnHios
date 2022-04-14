@@ -214,3 +214,9 @@ Here are a few resources:
 * [Longer video tutorial](https://www.youtube.com/watch?v=smJBsZ4YQZw)
 * [Quantile-Quantile plots - R Base Graphs](http://www.sthda.com/english/wiki/qq-plots-quantile-quantile-plots-r-base-graphs)
 
+**Ans **
+The quantile-quantile plot (a.k.a. Q-Q plot) is a graphical tool to help us assess if a set of data plausibly came from some theoretical distribution such as a Normal or exponential.
+```{r}
+qqnorm(samsung_ratings$rating)
+```
+
