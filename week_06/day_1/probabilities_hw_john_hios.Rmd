@@ -8,9 +8,6 @@ output: html_notebook
 
 ## The Titanic
 
-```{r, echo=FALSE, fig.cap="**Fig. 1.** The RMS Titanic leaving Southport, 10th April 1912 (public domain)", out.width = '60%'}
-knitr::include_graphics("images/RMS_Titanic.jpg")
-```
 
 A data set detailing the survival or death of passengers and crew members on the RMS Titanic is given in the `data` folder for this homework - use this data and **not** the built-in `Titanic` dataset in `R`. 
 
@@ -77,7 +74,7 @@ titanic %>%
 Calculate prob(survived|crew) and prob(survived|passenger) 
 ```{r}
 #prob(survived|crew) calculation  
-titanic %>% 
+prob_surv_crew <- titanic %>% 
   mutate(crew = if_else(class %in% c("engineering crew",
                                      "victualling crew", 
                                      "restaurant staff",
@@ -88,8 +85,24 @@ titanic %>%
   summarise(prob_surv_crew = n() / nrow(titanic))
 
 
+prob_crew <- titanic %>% 
+  mutate(crew = if_else(class %in% c("engineering crew",
+                                     "victualling crew", 
+                                     "restaurant staff",
+                                     "deck crew"), 
+                        TRUE, 
+                        FALSE)) %>% 
+  filter(crew == TRUE) %>% 
+  summarise(prob_crew = n() / nrow(titanic))
+
+
+prob_surv_given_crew <- prob_surv_crew / prob_crew 
+
+prob_surv_given_crew
+
+
 #prob(survived|passenger) calculation
-titanic %>% 
+prob_surv_psgr <- titanic %>% 
   mutate(crew = if_else(class %in% c("engineering crew",
                                      "victualling crew", 
                                      "restaurant staff",
@@ -98,9 +111,26 @@ titanic %>%
                         FALSE)) %>% 
   filter(survived == "yes" & crew == FALSE) %>% 
   summarise(prob_surv_passenger = n() / nrow(titanic))
+
+
+prob_psgr <- titanic %>% 
+  mutate(crew = if_else(class %in% c("engineering crew",
+                                     "victualling crew", 
+                                     "restaurant staff",
+                                     "deck crew"), 
+                        TRUE, 
+                        FALSE)) %>% 
+  filter(crew == FALSE) %>% 
+  summarise(prob_psgr = n() / nrow(titanic))
+
+
+prob_surv_given_psgr <- prob_surv_psgr / prob_psgr 
+
+prob_surv_given_psgr
+
 ```
 
-Conclusion: Passengers in the Titanic had more than twice chances to have survived than the crew.
+Conclusion: Passengers in the Titanic had 1.6 times more chances to have survived than the crew.
 
 <br>
 
@@ -290,7 +320,7 @@ prob_spade_and_black <- deck%>%
   pull()
 
 
-prob_spade_given_black = prob_spade_and_black / prob_black
+prob_spade_given_black <- prob_spade_and_black / prob_black
 
 prob_spade_given_black
 ```
@@ -300,3 +330,6 @@ prob_spade_given_black
 # Extension
 
 Answer more than 4 consolidation questions
+
+**Ans. ** 
+Done!
