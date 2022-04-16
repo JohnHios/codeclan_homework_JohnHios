@@ -199,7 +199,7 @@ s_four_dice %>%
   dplyr::filter(total %in% c(5, 6, 7)) %>% 
   summarise(prob = n() / nrow(s_four_dice))
 
-# The above probability assumes that the dice rolls are independent
+# The above probability assumes that the dice are unbiased, that is the outcomes of the dice rolls are equally likely
 ```
 
 
