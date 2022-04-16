@@ -122,7 +122,8 @@ samsung_ratings <- mobile_phones %>%
 
 
 samsung_ratings %>%
-  filter(!between(z_rating, left = -3, right = 3))
+  filter(!between(z_rating, left = -3, right = 3)) %>% 
+  distinct(rating, .keep_all = TRUE)
 ```
 
 
@@ -200,6 +201,11 @@ cat("\n")
 
 ```
 
+Conclusions: 
+1) The Samsung data distribution is too central compared to the normal distribution in the +\- 1 x (standard deviation) - compare 68.3% and 79.3 % percentages for normal and Samsung distributions respectively. 
+2) The Samsung data distribution has fewer values than the normal distribution in the areas between 1x(standard deviation) and 2x(standard deviation) to either side of the mean - adding another standard deviation increases the proportion of data by 27.1 % for the normal distribution and 12.6 % for the Samsung distribution.
+3) Adding another standard deviation on either side of the mean results in a 4.3 % increase in the proportion of normally distributed values, and a 6.1 % increase for the Samsung data, which is close.
+
 
 <br>
 
@@ -215,8 +221,10 @@ Here are a few resources:
 * [Quantile-Quantile plots - R Base Graphs](http://www.sthda.com/english/wiki/qq-plots-quantile-quantile-plots-r-base-graphs)
 
 **Ans **
-The quantile-quantile plot (a.k.a. Q-Q plot) is a graphical tool to help us assess if a set of data plausibly came from some theoretical distribution such as a Normal or exponential.
+The quantile-quantile plot (a.k.a. Q-Q plot) is a graphical tool to help us assess if a set of data plausibly came from some theoretical distribution such as a normal or exponential.
+The `qqnorm()` function in R, plots the data against a normal distribution. If the data are normally distributed, then `qqnorm()` will produce a series of points in a perfectly straight line. The `qqline()` function adds a line to the Q-Q plot to evaluate whether a clear deviation from normality is evident in the data.
 ```{r}
 qqnorm(samsung_ratings$rating)
+qqline(samsung_ratings$rating)
 ```
-
+The Samsung data exhibit significant deviations from the straight line in the tails. Therefore the data is not very well approximated by a normal distribution.
