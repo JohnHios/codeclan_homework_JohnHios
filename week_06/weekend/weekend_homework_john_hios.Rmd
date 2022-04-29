@@ -229,7 +229,7 @@ Now generate the null distribution. The value π0 we put in here should be the o
 null_distribution <- msleep_conservation_prop %>%
   specify(response = conservation_flag, success = "domesticated") %>% 
   hypothesize(null = "point", p = 0.05) %>%
-  generate(reps = 50000, type = "draw") %>%
+  generate(reps = 1000, type = "draw") %>%
   calculate(stat = "prop")
 
 head(null_distribution)
@@ -248,7 +248,7 @@ observed_stat
 Let’s visualise this distribution and overlay the observed statistics. 
 ```{r}
 null_distribution %>%
-  visualise(bins = 12) +
+  visualise(bins = 10) +
   shade_p_value(obs_stat = observed_stat, direction = "more")
 ```
 
@@ -275,6 +275,22 @@ For the following three business problems write out:
 
 **Question 1.**  
 You work for a independent coffee shop. The boss tells you that she thinks that around $40\%$ of people in the town (population $30,000$) know of the coffee shop, but you are skeptical of the estimate. You conduct a random survey of $200$ people in the town, asking if respondents are aware of your coffee shop. You want to use the sample to test the hypothesis that $40\%$ or more of the town's population have heard of the coffee shop. 
+
+<br>
+
+**Ans 1. **
+
+* What kind of test you would use: One-sample proportion, right-sided.  
+
+*  $H_0$ and $H_a$ in **both** mathematical notation and in words:
+
+The math notation is:
+$$H_{0}: \pi_{awareness} = 0.4 \\ H_{\alpha}: \pi_{awareness} > 0.4$$
+We want to investigate whether the population proportion that knows about the coffee shop is significantly larger from 40%.
+
+The question is framed in terms of two competing hypotheses. The null hypothesis states that the current proportion is the same as the given value of 40%. The alternative states that the current proportion is larger than 40%.
+
+* Also state the method you would use to generate the null distribution (bootstrap, permutation or simulation): We would draw the null distribution.
 
 <br>
 

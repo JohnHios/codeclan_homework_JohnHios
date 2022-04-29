@@ -72,28 +72,19 @@ Compute and visualise a bootstrap sampling distribution for the `mean(lot_area)`
 
 **Ans 3. **
 ```{r}
+# specify that we want to look at lot_area variable, 5000 reps, and want to calculate the mean
 bootstrap_sample <- ames %>%
-  rep_sample_n(size = nrow(ames), replace = TRUE, reps = 1000) %>% 
-  summarise(
-    mean_lot_area = mean(lot_area)
-  )
-
-bootstrap_sample 
+  specify(response = lot_area) %>%
+  generate(reps = 5000, type = "bootstrap") %>%
+  calculate(stat = "mean")
 ```
+
 
 ```{r}
 bootstrap_sample %>% 
-  ggplot(aes(x = mean_lot_area)) +
+  ggplot(aes(x = stat)) +
   geom_histogram(col = "white", fill = "steel blue", alpha = 0.7)
 ```
-
-```{r}
-summary_sample <- bootstrap_sample %>%
-  summarise(mean_lot_area = mean(mean_lot_area)) 
-
-summary_sample
-```
-
 
 <br>
 
@@ -104,24 +95,14 @@ Use your bootstrap distribution to calculate a $95\%$ CI for `mean(lot_area)`, a
 
 **Ans 4. **
 ```{r}
-# specify that we want to look at tenure variable, 1000 reps, and want to calculate the mean
-infer_resample <- bootstrap_sample %>%
-  specify(response = mean_lot_area) %>%
-  generate(reps = 1000, type = "bootstrap") %>%
-  calculate(stat = "mean")
-
-infer_resample
-```
-
-```{r}
-infer_ci_95 <- infer_resample %>% 
+infer_ci_95 <- bootstrap_sample %>% 
   get_confidence_interval(level = 0.95, type = "percentile")
 
 infer_ci_95
 ```
 
 ```{r}
-infer_resample %>%
+bootstrap_sample %>%
   visualise(bin = 20) +
   shade_confidence_interval(endpoints = infer_ci_95)
 ```
@@ -136,7 +117,7 @@ You would like to know the `mean(lot_area)` of the sold houses with higher confi
 
 **Ans 5. **
 ```{r}
-infer_ci_99 <- infer_resample %>% 
+infer_ci_99 <- bootstrap_sample %>% 
   get_confidence_interval(level = 0.99, type = "percentile")
 
 infer_ci_99
@@ -152,19 +133,11 @@ Calculate the point estimate of the `mean(lot_area)`
 <br>
 
 **Ans 6. **
+
 ```{r}
-sample_200 <- ames %>%
-  rep_sample_n(size = 200, reps = 1)
-
-sample_200
-
-summary_sample_200 <- sample_200 %>%
-  ungroup() %>%
-  summarise(mean_lot_area = mean(lot_area)) 
-
-summary_sample_200
+bootstrap_sample %>%
+  summarise(mean_lot_area = mean(stat)) 
 ```
-
 
 <hr>
 
@@ -173,164 +146,60 @@ summary_sample_200
 <br>
 
 **Task 1.**  
-Calculate a point estimate and $95\%$ CI for the proportion of houses in the data built before 1920.  Does the number of `reps` you use matter? [Investigate `reps` from $200$ up to $50000$, memory of your laptop permitting].
+Calculate a point estimate and $95\%$ CI for the proportion of houses in the data built before 1920. Does the number of `reps` you use matter? [Investigate `reps` from $200$ up to $50000$, memory of your laptop permitting].
 <br><br>
 
 **Ans. **
+Calculation of point estimate from original sample (in this exercise, it's the population) 
 ```{r}
-sample_year_built <- ames %>%
-  filter(year_built < 1920) %>% 
-  rep_sample_n(size = 100, reps = 1)
-
-sample_year_built
-
-summary_sample_year_built <- sample_year_built %>%
-  ungroup() %>%
-  summarise(
-    mean_lot_area = mean(lot_area),
-    lower_bound = quantile(lot_area, probs = 0.025),
-    upper_bound = quantile(lot_area, probs = 0.975),
-    ci_width = upper_bound - lower_bound
-    ) 
-
-summary_sample_year_built
-```
-
-
-
-
-
-```{r}
-sample_year_built <- ames %>%
-  filter(year_built < 1920) %>% 
-  rep_sample_n(size = 100, reps = 200)
-
-sample_year_built
-
-summary_sample_year_built <- sample_year_built %>%
-  ungroup() %>%
-  summarise(
-    mean_lot_area = mean(lot_area),
-    lower_bound = quantile(lot_area, probs = 0.025),
-    upper_bound = quantile(lot_area, probs = 0.975),
-    ci_width = upper_bound - lower_bound
-    ) 
-
-summary_sample_year_built
+ames %>% 
+  mutate(house_built_flag = if_else(year_built < 1920, "before_1920", "after_1920")) %>%
+  summarise(prop_built_before_1920 = mean(house_built_flag == "before_1920"))
 ```
 
 
 ```{r}
-sample_year_built <- ames %>%
-  filter(year_built < 1920) %>% 
-  rep_sample_n(size = 100, reps = 1000)
+# specify that we want to look at house_built_flag, for 200, 500, 1000, 2000, 5000, 10000, 20000, 50000 reps, and want to calculate the mean
 
-sample_year_built
+results_reps <- tibble()
 
-summary_sample_year_built <- sample_year_built %>%
-  ungroup() %>%
-  summarise(
-    mean_lot_area = mean(lot_area),
-    lower_bound = quantile(lot_area, probs = 0.025),
-    upper_bound = quantile(lot_area, probs = 0.975),
-    ci_width = upper_bound - lower_bound
-    ) 
+for (resamples_num in c(200, 500, 1000, 2000, 5000, 10000, 20000, 50000)){
+  
+  bootstrap_sample_rep <- ames %>% 
+  mutate(house_built_flag = if_else(year_built < 1920, "before_1920", "after_1920")) %>%
+  specify(response = house_built_flag, success = "before_1920") %>%
+  generate(reps = resamples_num, type = "bootstrap") %>%
+  calculate(stat = "prop")
+  
+  infer_ci_95 <- bootstrap_sample_rep %>% 
+  get_confidence_interval(level = 0.95, type = "percentile")
+  
+  # bootstrap_sample_rep %>%
+  # summarise(point_est = mean(stat))
+  
+  # prepare new row for results, storing CI bounds
+  this_result <- c(
+    resamples= resamples_num, 
+    point_est = mean(bootstrap_sample_rep$stat),
+    lower_bound = infer_ci_95 %>% 
+      pull(lower_ci), 
+    upper_bound = infer_ci_95 %>%
+      pull(upper_ci),
+    ci_width = infer_ci_95 %>% pull(upper_ci) - infer_ci_95 %>% pull(lower_ci)
+  )
 
-summary_sample_year_built
+
+  # add this_result to growing tibble of results
+  results_reps <- results_reps %>%
+    bind_rows(this_result)
+  
+  
+}
+
+results_reps
 ```
 
-
-
-
-```{r}
-sample_year_built <- ames %>%
-  filter(year_built < 1920) %>% 
-  rep_sample_n(size = 100, reps = 2000)
-
-sample_year_built
-
-summary_sample_year_built <- sample_year_built %>%
-  ungroup() %>%
-  summarise(
-    mean_lot_area = mean(lot_area),
-    lower_bound = quantile(lot_area, probs = 0.025),
-    upper_bound = quantile(lot_area, probs = 0.975),
-    ci_width = upper_bound - lower_bound
-    ) 
-
-summary_sample_year_built
-```
-
-
-
-
-
-
-```{r}
-sample_year_built <- ames %>%
-  filter(year_built < 1920) %>% 
-  rep_sample_n(size = 100, reps = 5000)
-
-sample_year_built
-
-summary_sample_year_built <- sample_year_built %>%
-  ungroup() %>%
-  summarise(
-    mean_lot_area = mean(lot_area),
-    lower_bound = quantile(lot_area, probs = 0.025),
-    upper_bound = quantile(lot_area, probs = 0.975),
-    ci_width = upper_bound - lower_bound
-    ) 
-
-summary_sample_year_built
-```
-
-```{r}
-sample_year_built <- ames %>%
-  filter(year_built < 1920) %>% 
-  rep_sample_n(size = 100, reps = 10000)
-
-sample_year_built
-
-summary_sample_year_built <- sample_year_built %>%
-  ungroup() %>%
-  summarise(
-    mean_lot_area = mean(lot_area),
-    lower_bound = quantile(lot_area, probs = 0.025),
-    upper_bound = quantile(lot_area, probs = 0.975),
-    ci_width = upper_bound - lower_bound
-    ) 
-
-summary_sample_year_built
-```
-
-
-
-
-
-
-
-```{r}
-sample_year_built <- ames %>%
-  filter(year_built < 1920) %>% 
-  rep_sample_n(size = 100, reps = 50000)
-
-sample_year_built
-
-summary_sample_year_built <- sample_year_built %>%
-  ungroup() %>%
-  summarise(
-    mean_lot_area = mean(lot_area),
-    lower_bound = quantile(lot_area, probs = 0.025),
-    upper_bound = quantile(lot_area, probs = 0.975),
-    ci_width = upper_bound - lower_bound
-    ) 
-
-summary_sample_year_built
-```
-
-
-For more than 200 repetitions, there's very little change in the mean_lot_area calculation and no change observed in the CI calculation. 
+As the number of reps increases, the mean proportion of houses built before 1920 and the 95% CI upper/lower bounds converge for more than 2000 generated resamples. The upper/lower bound estimates converge for more that 2000 reps are very small and do not justify the use of . 
 
 
 
