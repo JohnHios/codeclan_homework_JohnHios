@@ -199,7 +199,7 @@ for (resamples_num in c(200, 500, 1000, 2000, 5000, 10000, 20000, 50000)){
 results_reps
 ```
 
-As the number of reps increases, the mean proportion of houses built before 1920 and the 95% CI upper/lower bounds converge for more than 2000 generated resamples. The upper/lower bound estimates converge for more that 2000 reps are very small and do not justify the use of . 
+As the number of reps increases, the mean proportion of houses built before 1920 and the 95% CI upper/lower bounds converge for more than 2000 generated resamples. The upper/lower bound estimates converge for more than 2000 reps. 
 
 
 
