@@ -352,7 +352,7 @@ For the 3 business problems stated above, imagine we performed you got the follo
 <br>
 
 **Ans 1.**
-We fail to reject $H_0$. We do not have strong enough evidence to say that 40% of the town have heard of the coffee shop.
+We fail to reject $H_0$. We do not have strong enough evidence to say that those who have heard of the coffee shop are significantly more than 40% of the town population.
 
 <br>
 
@@ -361,7 +361,7 @@ We fail to reject $H_0$. We do not have strong enough evidence to say that 40% o
 **Website company problem**. Significance level: 0.01, $p$-value: 0.006
 
 **Ans 2.**
-We reject $H_0$ and accept $H_\alpha$. We have strong enough evidence that $\pi_{A} - \pi_{B} = 0$ is incorrect.
+We reject $H_0$ and accept $H_\alpha$. We have strong enough evidence that $\pi_{A} - \pi_{B} = 0$ is incorrect and therefore the CTR for the banner placed at the top of the page is significantly greater than the banner placed at the right-hand side of the page.
 
 <br>
 
