@@ -71,7 +71,7 @@ incidence_5_year_summary  %>%
 ```
 No missing values!!!
 
-### what are the distinct cancer values in the incidence data ?
+### What are the distinct cancer values in the incidence data ?
 
 Check the diagnosed cancer site
 ```{r}
@@ -80,7 +80,7 @@ incidence  %>%
 ```
 
 
-### what are the distinct cancer values in the 5 year summary incidence data ?
+### What are the distinct cancer values in the 5 year summary incidence data ?
 
 Check the diagnosed cancer site
 ```{r}
@@ -147,6 +147,7 @@ incidence <- incidence %>%
 glimpse(incidence)
 ```
 
+
 ## 5 Year Summary Incidence table
 ```{r}
 incidence_5_year_summary <- incidence_5_year_summary %>%
@@ -158,32 +159,100 @@ glimpse(incidence_5_year_summary)
 
 **Consider Saving in the clean_data folder your incidence data**
 
-Ratio of males vs females:
+
+
+#  Data Investigation
+
+## Incidence table
+
+Trend plot of all cancer types
+```{r}
+incidence %>% 
+  filter(cancer_site == "All cancer types") %>% 
+  select(cancer_site, sex, year, incidences_all_ages) %>% 
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, group = sex, colour = sex) +
+  geom_line() +
+  geom_point() +
+  scale_colour_brewer(palette = "Dark2")
+  
+  
+```
+
+<br>
+Trend plot of Non-melanoma skin cancer (most common cancer types across all ages for 2016-2020)
+```{r}
+incidence %>% 
+  filter(cancer_site == "Non-melanoma skin cancer") %>% 
+  select(cancer_site, sex, year, incidences_all_ages) %>% 
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, group = sex, colour = sex) +
+  geom_line() +
+  geom_point() +
+  scale_colour_brewer(palette = "Dark2")
+  
+  
+```
+
+
+
+## 5 Year Summary 
+
+Top 5 most common cancer types across all ages for 2016-2020:
 ```{r}
 incidence_5_year_summary %>%
-  group_by(sex) %>% 
-  summarise(cancer_counts = n())
+  filter(sex == "All", cancer_site != "All cancer types") %>% 
+  select(cancer_site, incidences_all_ages) %>% 
+  slice_max(incidences_all_ages, n = 5, with_ties = TRUE)
+  # arrange(desc(incidences_all_ages))
+```
+
+<br>
+Top 5 least common cancer types across all ages for 2016-2020:
+```{r}
+incidence_5_year_summary %>%
+  filter(sex == "All", cancer_site != "All cancer types") %>% 
+  select(cancer_site, incidences_all_ages) %>% 
+  slice_min(incidences_all_ages, n = 5, with_ties = TRUE)
+  # arrange(desc(incidences_all_ages))
 ```
 
 
 <br>
-Bike hires gender distribution:
+Top 5 most common cancer types for males across all ages for 2016-2020:
 ```{r}
-nyc_bikes_df %>%
-  index_by(year) %>%
-  group_by(gender) %>% 
-  summarise(bike_hire_counts = n(), bike_hiring_percentage = 100*bike_hire_counts/nrow(nyc_bikes_df))
+incidence_5_year_summary %>%
+  filter(cancer_site != "All cancer types", sex == "Male") %>% 
+  select(cancer_site, incidences_all_ages) %>% 
+  slice_max(incidences_all_ages, n = 5, with_ties = TRUE)
+  # arrange(desc(incidences_all_ages))
+```
+
+<br>
+Top 5 most common cancer types for females across all ages for 2016-2020:
+```{r}
+incidence_5_year_summary %>%
+  filter(cancer_site != "All cancer types", sex == "Female") %>% 
+  select(cancer_site, incidences_all_ages) %>% 
+  slice_max(incidences_all_ages, n = 5, with_ties = TRUE)
+  # arrange(desc(incidences_all_ages))
 ```
 
 
+<br>
+Most affected age group from cancer for 2016-2020:
+```{r}
+incidence_5_year_summary %>%
+  filter(cancer_site == "All cancer types", sex == "All") %>% 
+  select(cancer_site, starts_with("incidences_age")) %>%
+  pivot_longer(-cancer_site, names_to = "incidences_age", values_to = "age_group_count") %>%
+  separate(incidences_age, c("extra_column","age_group"), sep ="incidences_age_*") %>%
+  select(-extra_column) %>%
+  group_by(age_group) %>% 
+  summarise(max_count = max(age_group_count)) %>% 
+  arrange(desc(max_count))
 
-
-
-
-
-
-
-
+```
 
 
 
