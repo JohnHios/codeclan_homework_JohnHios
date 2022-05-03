@@ -1,0 +1,229 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Preamble
+
+## Call libraries
+```{r}
+library(tidyverse)
+library(janitor)
+library(here)
+library(lubridate)
+library(ggthemes)
+```
+
+# Number of cancer cases - Data Wrangling
+
+## View cancer incidence data 
+
+
+**Incidence by Health Board**
+
+``https://www.opendata.nhs.scot/dataset/c2c59eb1-3aff-48d2-9e9c-60ca8605431d/resource/3aef16b7-8af6-4ce0-a90b-8a29d6870014/download/opendata_inc9620_hb.csv``
+
+**Note:** I had to use the following command and arguments to read the csv file:
+```{r}
+incidence <- read_delim(here("raw_data/opendata_inc9620_hb.csv"), delim = "\t") 
+
+
+glimpse(incidence)
+
+```
+
+
+### Check incidence data for NA values
+```{r}
+
+incidence  %>%
+  summarise(across(.cols = everything(),
+                   .fns = ~sum(is.na(.x))))
+
+```
+No missing values!!!
+
+
+## View 5 year summary cancer incidence data 
+
+
+**5 Year Summary of Incidence by Health Board**
+
+``https://www.opendata.nhs.scot/dataset/c2c59eb1-3aff-48d2-9e9c-60ca8605431d/resource/e8d33b2b-1fb2-4d59-ad21-20fa2f76d9d5/download/opendata_inc1620comb_hb.csv``
+
+**Note:** I had to use the following command and arguments to read the csv file:
+```{r}
+incidence_5_year_summary <- read_delim(here("raw_data/opendata_inc1620comb_hb.csv"), delim = "\t") 
+
+
+glimpse(incidence_5_year_summary)
+
+```
+
+
+### Check 5 year summary incidence data for NA values
+```{r}
+
+incidence_5_year_summary  %>%
+  summarise(across(.cols = everything(),
+                   .fns = ~sum(is.na(.x))))
+
+```
+No missing values!!!
+
+### what are the distinct cancer values in the incidence data ?
+
+Check the diagnosed cancer site
+```{r}
+incidence  %>%
+  distinct(CancerSite)
+```
+
+
+### what are the distinct cancer values in the 5 year summary incidence data ?
+
+Check the diagnosed cancer site
+```{r}
+incidence_5_year_summary  %>%
+  distinct(CancerSite)
+```
+
+## View health board data
+
+**Health Board 2014 - Health Board 2019**
+
+``https://www.opendata.nhs.scot/dataset/9f942fdb-e59e-44f5-b534-d6e17229cc7b/resource/652ff726-e676-4a20-abda-435b98dd7bdc/download/hb14_hb19.csv``
+
+```{r}
+health_board_labels <- read_csv(here("raw_data/geography_codes_and_labels_hb2014_01042019.csv")) 
+
+glimpse(health_board_labels)
+```
+
+### View all HB values
+```{r}
+health_board_labels %>% 
+  distinct(HB, HBName, HBDateEnacted)
+```
+
+### Remove junk
+```{r}
+health_board_labels <- health_board_labels %>% 
+  select(HB, HBName)
+  
+
+glimpse(health_board_labels)
+```
+
+
+# Join tables 
+
+## Join 5 year summary incidence & health board
+```{r}
+incidence_5_year_summary <- incidence_5_year_summary %>%
+  left_join(health_board_labels, "HB")
+
+glimpse(incidence_5_year_summary)
+```
+
+
+## Join incidence & health board
+```{r}
+incidence <- incidence %>%
+  left_join(health_board_labels, "HB")
+
+glimpse(incidence)
+```
+
+
+#  Tidy up in-scope incidence tables
+
+## Incidence table
+```{r}
+incidence <- incidence %>%
+  filter(HBName == "NHS Borders") %>% 
+  clean_names()
+
+glimpse(incidence)
+```
+
+## 5 Year Summary Incidence table
+```{r}
+incidence_5_year_summary <- incidence_5_year_summary %>%
+  filter(HBName == "NHS Borders") %>% 
+  clean_names()
+
+glimpse(incidence_5_year_summary)
+```
+
+**Consider Saving in the clean_data folder your incidence data**
+
+Ratio of males vs females:
+```{r}
+incidence_5_year_summary %>%
+  group_by(sex) %>% 
+  summarise(cancer_counts = n())
+```
+
+
+<br>
+Bike hires gender distribution:
+```{r}
+nyc_bikes_df %>%
+  index_by(year) %>%
+  group_by(gender) %>% 
+  summarise(bike_hire_counts = n(), bike_hiring_percentage = 100*bike_hire_counts/nrow(nyc_bikes_df))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
