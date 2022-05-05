@@ -25,7 +25,8 @@ library(ggthemes)
 
 **Note:** I had to use the following command and arguments to read the csv file:
 ```{r}
-incidence <- read_delim(here("raw_data/opendata_inc9620_hb.csv"), delim = "\t") 
+incidence <- read_delim(here("raw_data/opendata_inc9620_hb.csv"), delim = "\t") %>% 
+  clean_names()
 
 
 glimpse(incidence)
@@ -53,7 +54,8 @@ No missing values!!!
 
 **Note:** I had to use the following command and arguments to read the csv file:
 ```{r}
-incidence_5_year_summary <- read_delim(here("raw_data/opendata_inc1620comb_hb.csv"), delim = "\t") 
+incidence_5_year_summary <- read_delim(here("raw_data/opendata_inc1620comb_hb.csv"), delim = "\t") %>% 
+  clean_names()
 
 
 glimpse(incidence_5_year_summary)
@@ -76,7 +78,7 @@ No missing values!!!
 Check the diagnosed cancer site
 ```{r}
 incidence  %>%
-  distinct(CancerSite)
+  distinct(cancer_site)
 ```
 
 
@@ -85,7 +87,7 @@ incidence  %>%
 Check the diagnosed cancer site
 ```{r}
 incidence_5_year_summary  %>%
-  distinct(CancerSite)
+  distinct(cancer_site)
 ```
 
 ## View health board data
@@ -95,7 +97,8 @@ incidence_5_year_summary  %>%
 ``https://www.opendata.nhs.scot/dataset/9f942fdb-e59e-44f5-b534-d6e17229cc7b/resource/652ff726-e676-4a20-abda-435b98dd7bdc/download/hb14_hb19.csv``
 
 ```{r}
-health_board_labels <- read_csv(here("raw_data/geography_codes_and_labels_hb2014_01042019.csv")) 
+health_board_labels <- read_csv(here("raw_data/geography_codes_and_labels_hb2014_01042019.csv")) %>% 
+  clean_names()
 
 glimpse(health_board_labels)
 ```
@@ -103,58 +106,101 @@ glimpse(health_board_labels)
 ### View all HB values
 ```{r}
 health_board_labels %>% 
-  distinct(HB, HBName, HBDateEnacted)
+  distinct(hb, hb_name, hb_date_enacted)
 ```
 
 ### Remove junk
 ```{r}
 health_board_labels <- health_board_labels %>% 
-  select(HB, HBName)
+  select(hb, hb_name)
   
 
 glimpse(health_board_labels)
 ```
 
+## View Custom Grouped Geographies
+
+**Grouped geographies used by ISD Scotland for bespoke analysis or to aid the availability of data which usually would have to be suppressed**
+
+``https://www.opendata.nhs.scot/dataset/65402d20-f0f1-4cee-a4f9-a960ca560444/resource/8f0c3067-7b10-44c6-af36-37f87a9e6efa/download/grouped-geography.csv``
+
+```{r}
+grouped_geography_labels <- read_csv(here("raw_data/grouped-geography.csv")) %>% 
+  clean_names()
+
+glimpse(grouped_geography_labels)
+```
+
+### Remove junk
+
+```{r}
+grouped_geography_labels <- grouped_geography_labels %>% 
+  select(grouped_geography, grouped_geography_name)
+  
+
+glimpse(grouped_geography_labels)
+```
+
 
 # Join tables 
 
-## Join 5 year summary incidence & health board
+## Join 5 year summary incidence & health board & custom grouped geographies
 ```{r}
 incidence_5_year_summary <- incidence_5_year_summary %>%
-  left_join(health_board_labels, "HB")
+  left_join(health_board_labels, "hb")
+
+incidence_5_year_summary <- incidence_5_year_summary %>%
+  left_join(grouped_geography_labels, by = c("hb" = "grouped_geography"))
 
 glimpse(incidence_5_year_summary)
+```
+
+
+### Concatenate ``hb_name`` and ``grouped_geography_name`` in a single column called ``hb_name``
+```{r}
+incidence_5_year_summary <- incidence_5_year_summary %>%
+  mutate(hb_name = if_else(!is.na(hb_name), hb_name, grouped_geography_name)) %>%
+  select(-grouped_geography_name)
+
+glimpse(incidence_5_year_summary)
+```
+
+```{r}
+
+incidence_5_year_summary  %>%
+  summarise(across(.cols = everything(),
+                   .fns = ~sum(is.na(.x))))
+
 ```
 
 
 ## Join incidence & health board
 ```{r}
 incidence <- incidence %>%
-  left_join(health_board_labels, "HB")
+  left_join(health_board_labels, "hb")
+
+incidence <- incidence %>%
+  left_join(grouped_geography_labels, by = c("hb" = "grouped_geography"))
+
 
 glimpse(incidence)
 ```
 
-
-#  Tidy up in-scope incidence tables
-
-## Incidence table
+### Concatenate ``hb_name`` and ``grouped_geography_name`` in a single column called ``hb_name``
 ```{r}
 incidence <- incidence %>%
-  filter(HBName == "NHS Borders") %>% 
-  clean_names()
-
-glimpse(incidence)
-```
-
-
-## 5 Year Summary Incidence table
-```{r}
-incidence_5_year_summary <- incidence_5_year_summary %>%
-  filter(HBName == "NHS Borders") %>% 
-  clean_names()
+  mutate(hb_name = if_else(!is.na(hb_name), hb_name, grouped_geography_name)) %>%
+  select(-grouped_geography_name)
 
 glimpse(incidence_5_year_summary)
+```
+
+```{r}
+
+incidence  %>%
+  summarise(across(.cols = everything(),
+                   .fns = ~sum(is.na(.x))))
+
 ```
 
 **Consider Saving in the clean_data folder your incidence data**
@@ -163,12 +209,28 @@ glimpse(incidence_5_year_summary)
 
 #  Data Investigation
 
-## Incidence table
+## Where is NHS Borders standing compared to other NHBs?
+
+```{r}
+incidence_5_year_summary %>% 
+  filter(cancer_site == "All cancer types", sex == "All") %>% 
+  mutate(label_text = ifelse(hb_name == "NHS Borders", "The NHS Borders has 4065 incidents", NA)) %>% 
+  select(hb_name, incidences_all_ages, label_text) %>% 
+  ggplot() +
+  aes(x = reorder(hb_name, incidences_all_ages), y = incidences_all_ages, fill = reorder(hb_name, incidences_all_ages) == "NHS Borders") +
+  geom_col() +
+  scale_fill_manual(values = c('steelblue', 'red'), guide = "none") +
+  coord_flip() +
+  geom_text(aes(label = label_text), fontface = "bold",                  
+           color = "red", size = 3, hjust = -0.05) 
+```
+
+## Incidence trend
 
 Trend plot of all cancer types
 ```{r}
 incidence %>% 
-  filter(cancer_site == "All cancer types") %>% 
+  filter(cancer_site == "All cancer types", hb_name == "NHS Borders") %>% 
   select(cancer_site, sex, year, incidences_all_ages) %>% 
   ggplot() +
   aes(x = year, y = incidences_all_ages, group = sex, colour = sex) +
@@ -178,43 +240,28 @@ incidence %>%
   
   
 ```
-
-<br>
-Trend plot of Non-melanoma skin cancer (most common cancer types across all ages for 2016-2020)
-```{r}
-incidence %>% 
-  filter(cancer_site == "Non-melanoma skin cancer") %>% 
-  select(cancer_site, sex, year, incidences_all_ages) %>% 
-  ggplot() +
-  aes(x = year, y = incidences_all_ages, group = sex, colour = sex) +
-  geom_line() +
-  geom_point() +
-  scale_colour_brewer(palette = "Dark2")
-  
-  
-```
-
-
 
 ## 5 Year Summary 
 
 Top 5 most common cancer types across all ages for 2016-2020:
 ```{r}
 incidence_5_year_summary %>%
-  filter(sex == "All", cancer_site != "All cancer types") %>% 
+  filter(sex == "All", cancer_site != "All cancer types", hb_name == "NHS Borders") %>% 
   select(cancer_site, incidences_all_ages) %>% 
   slice_max(incidences_all_ages, n = 5, with_ties = TRUE)
   # arrange(desc(incidences_all_ages))
 ```
 
-<br>
-Top 5 least common cancer types across all ages for 2016-2020:
 ```{r}
 incidence_5_year_summary %>%
-  filter(sex == "All", cancer_site != "All cancer types") %>% 
+  filter(sex == "All", cancer_site != "All cancer types", hb_name == "NHS Borders") %>% 
   select(cancer_site, incidences_all_ages) %>% 
-  slice_min(incidences_all_ages, n = 5, with_ties = TRUE)
-  # arrange(desc(incidences_all_ages))
+  slice_max(incidences_all_ages, n = 5, with_ties = TRUE) %>% 
+  ggplot() +
+  aes(x = reorder(cancer_site, incidences_all_ages), y = incidences_all_ages) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = incidences_all_ages), fontface = "bold", color = "white", size = 3, hjust = 1.25) +
+  coord_flip()
 ```
 
 
@@ -222,35 +269,89 @@ incidence_5_year_summary %>%
 Top 5 most common cancer types for males across all ages for 2016-2020:
 ```{r}
 incidence_5_year_summary %>%
-  filter(cancer_site != "All cancer types", sex == "Male") %>% 
+  filter(cancer_site != "All cancer types", sex == "Male", hb_name == "NHS Borders") %>% 
   select(cancer_site, incidences_all_ages) %>% 
   slice_max(incidences_all_ages, n = 5, with_ties = TRUE)
   # arrange(desc(incidences_all_ages))
 ```
 
+
+```{r}
+incidence_5_year_summary %>%
+  filter(cancer_site != "All cancer types", sex == "Male", hb_name == "NHS Borders") %>% 
+  select(cancer_site, incidences_all_ages) %>% 
+  slice_max(incidences_all_ages, n = 5, with_ties = TRUE) %>% 
+  ggplot() +
+  aes(x = reorder(cancer_site, incidences_all_ages), y = incidences_all_ages) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = incidences_all_ages), fontface = "bold", color = "white", size = 3, hjust = 1.5) +
+  coord_flip()
+```
+
+
+
 <br>
 Top 5 most common cancer types for females across all ages for 2016-2020:
 ```{r}
 incidence_5_year_summary %>%
-  filter(cancer_site != "All cancer types", sex == "Female") %>% 
+  filter(cancer_site != "All cancer types", sex == "Female", hb_name == "NHS Borders") %>% 
   select(cancer_site, incidences_all_ages) %>% 
   slice_max(incidences_all_ages, n = 5, with_ties = TRUE)
   # arrange(desc(incidences_all_ages))
+```
+
+```{r}
+incidence_5_year_summary %>%
+  filter(cancer_site != "All cancer types", sex == "Female", hb_name == "NHS Borders") %>% 
+  select(cancer_site, incidences_all_ages) %>% 
+  slice_max(incidences_all_ages, n = 5, with_ties = TRUE) %>% 
+  ggplot() +
+  aes(x = reorder(cancer_site, incidences_all_ages), y = incidences_all_ages) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = incidences_all_ages), fontface = "bold", color = "white", size = 3, hjust = 1.5) +
+  coord_flip()
 ```
 
 
 <br>
 Most affected age group from cancer for 2016-2020:
 ```{r}
-incidence_5_year_summary %>%
-  filter(cancer_site == "All cancer types", sex == "All") %>% 
+incidence_5_year_summary_longer <- incidence_5_year_summary %>%
+  filter(cancer_site == "All cancer types", sex == "All", hb_name == "NHS Borders") %>% 
   select(cancer_site, starts_with("incidences_age")) %>%
   pivot_longer(-cancer_site, names_to = "incidences_age", values_to = "age_group_count") %>%
   separate(incidences_age, c("extra_column","age_group"), sep ="incidences_age_*") %>%
-  select(-extra_column) %>%
+  select(-extra_column) 
+
+incidence_5_year_summary_longer <- incidence_5_year_summary_longer %>% 
+  mutate(age_group = str_replace(age_group, "to", "-")) %>% 
+  mutate(age_group = str_replace(age_group, "under", "<")) %>% 
+  mutate(age_group = str_replace(age_group, "and_over", "+")) %>% 
+  mutate(age_group = factor(
+    age_group, 
+    levels = c("<5", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39",
+               "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74",
+               "75-79", "80-84", "85+"
+               )
+           )
+        )
+
+incidence_5_year_summary_longer %>% 
   group_by(age_group) %>% 
   summarise(max_count = max(age_group_count)) %>% 
   arrange(desc(max_count))
+```
+
+
+```{r}
+incidence_5_year_summary_longer %>% 
+  group_by(age_group) %>% 
+  summarise(max_count = max(age_group_count)) %>%
+  ggplot() +
+  aes(x = age_group, y = max_count) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = max_count), fontface = "bold", color = "black", size = 3, vjust = -0.5) +
+  theme(axis.text.x = element_text(angle = 30, vjust = 0.5))
 
 ```
 
@@ -258,24 +359,50 @@ incidence_5_year_summary %>%
 
 
 
+# Misc
 
 
 
+<br>
+Trend plot of Non-melanoma skin cancer (most common cancer types across all ages for 2016-2020)
+```{r}
+incidence %>% 
+  filter(cancer_site == "Non-melanoma skin cancer", hb_name == "NHS Borders") %>% 
+  select(cancer_site, sex, year, incidences_all_ages) %>% 
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, group = sex, colour = sex) +
+  geom_line() +
+  geom_point() +
+  scale_colour_brewer(palette = "Dark2")
+  
+  
+```
 
 
 
+<br>
+Top 5 least common cancer types across all ages for 2016-2020:
+```{r}
+incidence_5_year_summary %>%
+  filter(sex == "All", cancer_site != "All cancer types", hb_name == "NHS Borders") %>% 
+  select(cancer_site, incidences_all_ages) %>% 
+  slice_min(incidences_all_ages, n = 5, with_ties = TRUE)
+  # arrange(desc(incidences_all_ages))
+```
 
 
 
-
-
-
-
-
-
-
-
-
+```{r}
+incidence_5_year_summary %>%
+  filter(sex == "All", cancer_site != "All cancer types", hb_name == "NHS Borders") %>% 
+  select(cancer_site, incidences_all_ages) %>% 
+  slice_min(incidences_all_ages, n = 5, with_ties = TRUE) %>% 
+  ggplot() +
+  aes(x = reorder(cancer_site, incidences_all_ages), y = incidences_all_ages) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = incidences_all_ages), fontface = "bold", color = "white", size = 3, hjust = 1.5)+
+  coord_flip()
+```
 
 
 
