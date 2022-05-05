@@ -214,30 +214,83 @@ incidence  %>%
 ```{r}
 incidence_5_year_summary %>% 
   filter(cancer_site == "All cancer types", sex == "All") %>% 
-  mutate(label_text = ifelse(hb_name == "NHS Borders", "The NHS Borders has 4065 incidents", NA)) %>% 
+  mutate(label_text = ifelse(hb_name == "NHS Borders", 
+                             "The NHS Borders has 4065 incidents", NA)) %>% 
   select(hb_name, incidences_all_ages, label_text) %>% 
   ggplot() +
-  aes(x = reorder(hb_name, incidences_all_ages), y = incidences_all_ages, fill = reorder(hb_name, incidences_all_ages) == "NHS Borders") +
+  aes(
+    x = reorder(hb_name, incidences_all_ages), 
+    y = incidences_all_ages, 
+    fill = reorder(hb_name, incidences_all_ages) == "NHS Borders"
+  ) +
   geom_col() +
   scale_fill_manual(values = c('steelblue', 'red'), guide = "none") +
   coord_flip() +
   geom_text(aes(label = label_text), fontface = "bold",                  
-           color = "red", size = 3, hjust = -0.05) 
+           color = "red", size = 3, hjust = -0.05) +
+  ggtitle(
+    "Cancer Incidence Across NHS Boards In Scotland",
+    subtitle =  "(All cancer types* ; Years 2016-2020)"
+  ) +
+  labs(x = "Health Board \n ", 
+       y = "\n Number of Cases", 
+       caption = "\n * excluding non-melanoma skin cancers (ICD-10 C00-C97 excl C44)"
+  ) 
 ```
 
-## Incidence trend
+
+```{r}
+incidence_5_year_summary %>% 
+  filter(cancer_site == "All cancer types", sex == "All", hb_name == "NHS Borders") %>% 
+  select(cancer_site, sex, year, incidences_all_ages) 
+```
+
+
+```{r}
+incidence_5_year_summary %>% 
+  filter(cancer_site == "All cancer types", sex == "All") %>% 
+  select(hb_name, easr) %>% 
+  ggplot() +
+  aes(
+    x = reorder(hb_name, easr), 
+    y = easr, 
+    fill = reorder(hb_name, easr) == "NHS Borders"
+  ) +
+  geom_col() +
+  scale_fill_manual(values = c('steelblue', 'red'), guide = "none") +
+  coord_flip() +
+  ggtitle(
+    "Cancer Incidence Across NHS Boards In Scotland",
+    subtitle =  "(All cancer types*; Rate per 100k person-years at risk; Years 2016-2020)"
+  ) +
+  labs(x = "Health Board \n ", 
+       y = "\n European Age Standardised Rate (EASR)", 
+       caption = "\n * excluding non-melanoma skin cancers (ICD-10 C00-C97 excl C44)"
+  ) 
+```
+
+
+## Cancer Incident trend
 
 Trend plot of all cancer types
 ```{r}
 incidence %>% 
-  filter(cancer_site == "All cancer types", hb_name == "NHS Borders") %>% 
+  filter(cancer_site == "All cancer types", hb_name == "NHS Borders", ) %>% 
   select(cancer_site, sex, year, incidences_all_ages) %>% 
   ggplot() +
   aes(x = year, y = incidences_all_ages, group = sex, colour = sex) +
-  geom_line() +
-  geom_point() +
-  scale_colour_brewer(palette = "Dark2")
-  
+  geom_line(size = 0.75) +
+  geom_point(size = 1.5) +
+  scale_colour_brewer(palette = "Dark2") +
+  ggtitle(
+    "NHS Boarders Cancer Incidence Trend Plot",
+    subtitle =  "(All cancer types*; Years 1996-2020)"
+  ) +
+  labs(x = "\nYear", 
+       y = "Number of Cases \n",  
+       caption = "\n * excluding non-melanoma skin cancers (ICD-10 C00-C97 excl C44)",
+       color = "Gender
+  ) 
   
 ```
 
@@ -248,21 +301,58 @@ Top 5 most common cancer types across all ages for 2016-2020:
 incidence_5_year_summary %>%
   filter(sex == "All", cancer_site != "All cancer types", hb_name == "NHS Borders") %>% 
   select(cancer_site, incidences_all_ages) %>% 
-  slice_max(incidences_all_ages, n = 5, with_ties = TRUE)
-  # arrange(desc(incidences_all_ages))
+  # slice_max(incidences_all_ages, n = 5, with_ties = TRUE)
+  arrange(desc(incidences_all_ages)) %>% 
+  summarise(sum_inc = sum(incidences_all_ages))
 ```
 
 ```{r}
 incidence_5_year_summary %>%
-  filter(sex == "All", cancer_site != "All cancer types", hb_name == "NHS Borders") %>% 
+  filter(cancer_site == "All cancer types", hb_name == "NHS Borders") %>% 
+  select(sex, cancer_site, incidences_all_ages) %>% 
+  # slice_max(incidences_all_ages, n = 5, with_ties = TRUE)
+  arrange(desc(incidences_all_ages))
+```
+
+
+
+```{r}
+incidence_5_year_summary %>%
+  filter(
+    sex == "All", 
+    cancer_site != "All cancer types", 
+    hb_name == "NHS Borders"
+  ) %>% 
   select(cancer_site, incidences_all_ages) %>% 
   slice_max(incidences_all_ages, n = 5, with_ties = TRUE) %>% 
   ggplot() +
   aes(x = reorder(cancer_site, incidences_all_ages), y = incidences_all_ages) +
   geom_col(fill = "steelblue") +
-  geom_text(aes(label = incidences_all_ages), fontface = "bold", color = "white", size = 3, hjust = 1.25) +
-  coord_flip()
+  geom_text(
+    aes(label = incidences_all_ages), 
+    fontface = "bold", 
+    color = "white", 
+    size = 3, 
+    hjust = 1.25
+  ) +
+  coord_flip() +
+  ggtitle(
+    "Top 5 Cancer Types Across All Ages",
+    subtitle =  "(Years 1996-2020)"
+  ) +
+  labs(x = "Year \n", y = "\n Number of Cases") 
 ```
+
+```{r}
+# incidence_5_year_summary %>%
+#   filter(
+#     sex == "All", 
+#     # cancer_site == "All cancer types", 
+#     hb_name == "NHS Borders"
+#   ) %>% 
+#   select(cancer_site, incidences_all_ages) %>%  
+```
+
 
 
 <br>
@@ -278,14 +368,30 @@ incidence_5_year_summary %>%
 
 ```{r}
 incidence_5_year_summary %>%
-  filter(cancer_site != "All cancer types", sex == "Male", hb_name == "NHS Borders") %>% 
+  filter(
+    cancer_site != "All cancer types", 
+    sex == "Male", 
+    hb_name == "NHS Borders"
+  ) %>% 
   select(cancer_site, incidences_all_ages) %>% 
   slice_max(incidences_all_ages, n = 5, with_ties = TRUE) %>% 
   ggplot() +
   aes(x = reorder(cancer_site, incidences_all_ages), y = incidences_all_ages) +
   geom_col(fill = "steelblue") +
-  geom_text(aes(label = incidences_all_ages), fontface = "bold", color = "white", size = 3, hjust = 1.5) +
-  coord_flip()
+  geom_text(
+    aes(label = incidences_all_ages), 
+    fontface = "bold", 
+    color = "white", 
+    size = 3, 
+    hjust = 1.5
+  ) +
+  coord_flip() +
+  ggtitle(
+    "Top 5 Cancer Types For Males Across All Ages",
+    subtitle =  "(Years 1996-2020)"
+  ) +
+  labs(x = "Year", y = "\n Number of Cases") +
+  ylim(c(0, 1000))
 ```
 
 
@@ -294,7 +400,11 @@ incidence_5_year_summary %>%
 Top 5 most common cancer types for females across all ages for 2016-2020:
 ```{r}
 incidence_5_year_summary %>%
-  filter(cancer_site != "All cancer types", sex == "Female", hb_name == "NHS Borders") %>% 
+  filter(
+    cancer_site != "All cancer types", 
+    sex == "Female", 
+    hb_name == "NHS Borders"
+    ) %>% 
   select(cancer_site, incidences_all_ages) %>% 
   slice_max(incidences_all_ages, n = 5, with_ties = TRUE)
   # arrange(desc(incidences_all_ages))
@@ -302,56 +412,141 @@ incidence_5_year_summary %>%
 
 ```{r}
 incidence_5_year_summary %>%
-  filter(cancer_site != "All cancer types", sex == "Female", hb_name == "NHS Borders") %>% 
+  filter(
+    cancer_site != "All cancer types", 
+    sex == "Female", 
+    hb_name == "NHS Borders"
+  ) %>% 
   select(cancer_site, incidences_all_ages) %>% 
   slice_max(incidences_all_ages, n = 5, with_ties = TRUE) %>% 
   ggplot() +
   aes(x = reorder(cancer_site, incidences_all_ages), y = incidences_all_ages) +
   geom_col(fill = "steelblue") +
-  geom_text(aes(label = incidences_all_ages), fontface = "bold", color = "white", size = 3, hjust = 1.5) +
-  coord_flip()
+  geom_text(
+    aes(label = incidences_all_ages), 
+    fontface = "bold", 
+    color = "white", 
+    size = 3, 
+    hjust = 1.5
+  ) +
+  coord_flip() +
+  ggtitle(
+    "Top 5 Cancer Types For Females Across All Ages",
+    subtitle =  "(Years 1996-2020)"
+  ) +
+  labs(x = "Year \n", y = "\n Number of Cases")
 ```
 
 
 <br>
 Most affected age group from cancer for 2016-2020:
 ```{r}
+# Change tibble format to long
 incidence_5_year_summary_longer <- incidence_5_year_summary %>%
-  filter(cancer_site == "All cancer types", sex == "All", hb_name == "NHS Borders") %>% 
-  select(cancer_site, starts_with("incidences_age")) %>%
-  pivot_longer(-cancer_site, names_to = "incidences_age", values_to = "age_group_count") %>%
-  separate(incidences_age, c("extra_column","age_group"), sep ="incidences_age_*") %>%
+  filter(
+    cancer_site == "All cancer types", 
+    hb_name == "NHS Borders"
+  ) %>% 
+  select(cancer_site, sex, starts_with("incidences_age")) %>%
+  pivot_longer(
+    -c(cancer_site, sex), 
+    names_to = "incidences_age", 
+    values_to = "cancer_incidences"
+  ) %>%
+  separate(
+    incidences_age, 
+    c("extra_column","age_group"), 
+    sep ="incidences_age_*"
+  ) %>%
   select(-extra_column) 
 
+
+# Get age group values in presentable format and place in correct order
 incidence_5_year_summary_longer <- incidence_5_year_summary_longer %>% 
   mutate(age_group = str_replace(age_group, "to", "-")) %>% 
   mutate(age_group = str_replace(age_group, "under", "<")) %>% 
   mutate(age_group = str_replace(age_group, "and_over", "+")) %>% 
-  mutate(age_group = factor(
-    age_group, 
-    levels = c("<5", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39",
-               "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74",
-               "75-79", "80-84", "85+"
-               )
-           )
-        )
+  mutate(
+    age_group = factor(
+      age_group, 
+      levels = c("<5", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", 
+                 "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", 
+                 "70-74","75-79", "80-84", "85+" )
+    )
+  )
+
+
 
 incidence_5_year_summary_longer %>% 
   group_by(age_group) %>% 
-  summarise(max_count = max(age_group_count)) %>% 
-  arrange(desc(max_count))
+  select(age_group, sex, cancer_incidences) %>% 
+  arrange(desc(age_group))
 ```
 
+```{r}
+incidence_5_year_summary_longer %>% 
+  filter(sex == "All") %>% 
+  group_by(age_group) %>% 
+  select(age_group, sex, cancer_incidences) %>% 
+  ggplot() +
+  aes(x = age_group, y = cancer_incidences) +
+  geom_col(fill = "steelblue") +
+  geom_text(
+    aes(label = cancer_incidences), 
+    fontface = "bold", 
+    color = "black", 
+    size = 3, 
+    vjust = -0.5
+  ) +
+  theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) +
+  ggtitle(
+    "Cancer Incidents By Age",
+    subtitle =  "(All cancer types*; Years 1996-2020)"
+  ) +
+  labs(x = "\n Age Group", 
+       y = "Number of Cases \n",
+       caption = "\n * excluding non-melanoma skin cancers (ICD-10 C00-C97 excl C44)"
+  )
+
+```
+
+```{r}
+incidence_5_year_summary_longer %>% 
+  filter(sex != "All") %>% 
+  group_by(age_group) %>% 
+  select(age_group, sex, cancer_incidences) %>% 
+  ggplot() +
+  aes(x = age_group, y = cancer_incidences, fill = sex) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values=c("blue", "steelblue")) +
+  theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) +
+  ggtitle(
+    "Cancer Incidents By Age and Gender",
+    subtitle =  "(All cancer types*; Years 1996-2020)"
+  ) +
+  labs(x = "\n Age Group", 
+       y = "Number of Cases \n", 
+       fill = "Gender",
+       caption = "\n * excluding non-melanoma skin cancers (ICD-10 C00-C97 excl C44)"
+  )
+
+```
 
 ```{r}
 incidence_5_year_summary_longer %>% 
   group_by(age_group) %>% 
-  summarise(max_count = max(age_group_count)) %>%
+  select(age_group, sex, cancer_incidences) %>% 
   ggplot() +
-  aes(x = age_group, y = max_count) +
-  geom_col(fill = "steelblue") +
-  geom_text(aes(label = max_count), fontface = "bold", color = "black", size = 3, vjust = -0.5) +
-  theme(axis.text.x = element_text(angle = 30, vjust = 0.5))
+  aes(x = age_group, y = cancer_incidences, fill = sex) +
+  geom_col(position = "dodge") +
+  facet_wrap(~sex) +
+  scale_fill_manual(values=c("steelblue", "blue", "darkgreen")) +
+  theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) +
+  ggtitle(
+    "Cancer Incidents By Age and Gender",
+    subtitle =  "(Years 1996-2020)"
+  ) +
+  labs(x = "\n Age Group", y = "Number of Cases \n", fill = "Sex")
 
 ```
 
@@ -359,7 +554,9 @@ incidence_5_year_summary_longer %>%
 
 
 
-# Misc
+
+
+# Junk
 
 
 
