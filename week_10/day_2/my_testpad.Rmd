@@ -1,0 +1,186 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+<hr>
+
+# MVP
+
+<br>
+
+1. Load the `housing_prices.csv` data set and undertake an initial exploration of the data. You will find details on the data set on the relevant [Kaggle page](https://www.kaggle.com/camnugent/california-housing-prices)
+
+<br>
+**Ans**
+
+Call libraries
+```{r}
+library(tidyverse)
+library(here)
+library(GGally)
+library(ggfortify)
+library(mosaic)
+library(janitor)
+```
+
+```{r}
+housing <- read_csv(here("data/housing_prices.csv"))
+
+glimpse(housing)
+```
+
+Check data for NA values
+```{r}
+housing  %>%
+  summarise(across(.cols = everything(),
+                   .fns = ~sum(is.na(.x))))
+
+```
+
+<br>
+
+2. We expect the `total_rooms` of houses to be strongly correlated with `total_bedrooms`. Use `ggpairs()` to investigate correlations between these two variables.
+
+<br>
+**Ans**
+```{r}
+ggpairs(select(housing, total_rooms, total_bedrooms))
+```
+Variables have a strong positive correlation (r = 0.934)
+
+
+<br> 
+
+3. So, we do find significant correlations. Let's drop `total_bedrooms` from the dataset, and use only `total_rooms` going forward.
+
+<br>
+**Ans**
+
+```{r}
+housing <- housing  %>%
+  select(-total_bedrooms)
+```
+
+
+<br>
+
+4. We are interested in developing a regression model for the `median_house_value` of a house in terms of the possible predictor variables in the dataset. 
+
+  i. Use `ggpairs()` to investigate correlations between `median_house_value` and the predictors (this may take a while to run, don't worry, make coffee or something).
+
+  ii. Perform further `ggplot` visualisations of any significant correlations you find.
+
+<br>
+**Ans**
+
+
+```{r}
+# ggpairs(housing, columns = 3:9)
+ggpairs(housing, columns = 1:9)
+```
+
+
+<br>
+
+5. Shortly we may try a regression model to fit the categorical predictor `ocean_proximity`. Investigate the level of `ocean_proximity` predictors. How many dummy variables do you expect to get from it?
+
+<br>
+**Ans**
+```{r}
+housing %>% 
+  distinct(ocean_proximity)
+```
+
+We expect to get 4 (= 5-1) dummy variables
+
+
+<br>
+ 
+6. Start with simple linear regression. Regress `median_house_value` on `median_income` and check the regression diagnostics.
+
+<br>
+**Ans**
+
+Regression:
+```{r}
+housing %>%
+  ggplot(aes(x = median_income, y = median_house_value)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+Diagnostics
+```{r}
+model <- lm(median_house_value ~ median_income, data = housing)
+
+autoplot(model)
+
+summary(model)
+```
+The model is not adequate - the residuals are not following a normal distribution.
+
+
+<br> 
+
+7. Add another predictor of your choice. Check your assumptions, diagnostics, and interpret the model.
+
+<br>
+**Ans**
+Add housing median age into the model:
+```{r}
+model2 <- lm(median_house_value ~ median_income + housing_median_age, data = housing)
+
+autoplot(model2)
+
+summary(model2)
+```
+
+
+
+
+# Extension
+    
+<br>
+
+8. Try adding an interaction between `log(medium_income)` and your chosen categorical predictor. Do you think this interaction term is statistically justified?
+
+<br>
+**Ans**
+Chosen categorical predictor: ocean_proximity
+```{r}
+housing_dummy <- housing %>%
+  fastDummies::dummy_cols(select_columns = "ocean_proximity", remove_first_dummy = TRUE, remove_selected_columns = TRUE) 
+
+housing_dummy <- housing_dummy %>% 
+  clean_names()
+```
+
+```{r}
+model3 <- lm(median_house_value ~ median_income + housing_median_age + 
+             # log10(median_income)*ocean_proximity_inland + 
+             # log10(median_income)*ocean_proximity_island + 
+             # log10(median_income)*ocean_proximity_near_bay + 
+             log10(median_income)*ocean_proximity_near_ocean,
+             data = housing_dummy)
+plotModel(model3)
+
+
+```
+
+```{r}
+autoplot(model3)
+
+summary(model3)
+```
+
+
+<br>
+
+9. Find and plot an appropriate visualisation to show the effect of this interaction
+
+```{r}
+coplot(median_house_value ~ median_income | ocean_proximity_near_ocean,
+       data = housing_dummy)
+```
+
