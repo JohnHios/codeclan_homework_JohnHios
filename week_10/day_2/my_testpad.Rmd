@@ -121,6 +121,15 @@ summary(model)
 The model is not adequate - the residuals are not following a normal distribution.
 
 
+
+The histogram of the `median_house_value`` shows that the data are right skewed - perhaps good to use a log-scale to model the data.
+```{r}
+ggplot(housing, aes(median_house_value)) +
+  geom_histogram(col = "white")
+```
+
+
+
 <br> 
 
 7. Add another predictor of your choice. Check your assumptions, diagnostics, and interpret the model.
