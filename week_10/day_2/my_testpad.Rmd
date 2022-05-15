@@ -58,7 +58,7 @@ Variables have a strong positive correlation (r = 0.934)
 **Ans**
 
 ```{r}
-housing <- housing  %>%
+housing_tidy <- housing  %>%
   select(-total_bedrooms)
 ```
 
@@ -69,18 +69,46 @@ housing <- housing  %>%
 
   i. Use `ggpairs()` to investigate correlations between `median_house_value` and the predictors (this may take a while to run, don't worry, make coffee or something).
 
+<br>
+**Ans**
+
+```{r}
+# ggpairs(housing_tidy, columns = 3:9)
+ggpairs(housing_tidy, columns = 1:9)
+```
+``median_house_value`` has a strong positive correlation with ``median_income``. This is followed by very weak correlations with ``latitude`` (negative) and ``total_rooms`` (positive). The histograms with ``ocean_proximity`` show some variation.
+
   ii. Perform further `ggplot` visualisations of any significant correlations you find.
 
 <br>
 **Ans**
 
-
 ```{r}
-# ggpairs(housing, columns = 3:9)
-ggpairs(housing, columns = 1:9)
+housing_tidy %>%
+  ggplot(aes(x = median_income, y = median_house_value)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
 ```
 
+```{r}
+housing_tidy %>%
+  ggplot(aes(x = latitude, y = median_house_value)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
 
+```{r}
+housing_tidy %>%
+  ggplot(aes(x = total_rooms, y = median_house_value)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+housing_tidy %>%
+  ggplot(aes(x = ocean_proximity, y = median_house_value)) +
+  geom_boxplot()
+```
 <br>
 
 5. Shortly we may try a regression model to fit the categorical predictor `ocean_proximity`. Investigate the level of `ocean_proximity` predictors. How many dummy variables do you expect to get from it?
@@ -102,32 +130,19 @@ We expect to get 4 (= 5-1) dummy variables
 <br>
 **Ans**
 
-Regression:
+
+Regression and Diagnostics:
 ```{r}
-housing %>%
-  ggplot(aes(x = median_income, y = median_house_value)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
+model_1 <- lm(median_house_value ~ median_income, data = housing_tidy)
+
+autoplot(model_1)
+
+summary(model_1)
 ```
-
-Diagnostics
-```{r}
-model <- lm(median_house_value ~ median_income, data = housing)
-
-autoplot(model)
-
-summary(model)
-```
-The model is not adequate - the residuals are not following a normal distribution.
-
-
-
-The histogram of the `median_house_value`` shows that the data are right skewed - perhaps good to use a log-scale to model the data.
-```{r}
-ggplot(housing, aes(median_house_value)) +
-  geom_histogram(col = "white")
-```
-
+The model is not adequate because:
+1. The Residuals vs Fitted plot are not randomly scattered around zero.
+2.The residuals are not following a normal distribution. The extreme values in the Q-Q plot are not lying on the straight line.
+3. The Scale-Location plot shows that the residual variation is not occurring on a fixed band above the x-axis. The scatter shows a funnel shaped distribution, which indicates heteroskedasticity.  
 
 
 <br> 
@@ -136,17 +151,27 @@ ggplot(housing, aes(median_house_value)) +
 
 <br>
 **Ans**
-Add housing median age into the model:
+Add ``ocean_proximity`` into the model:
 ```{r}
-model2 <- lm(median_house_value ~ median_income + housing_median_age, data = housing)
+model_2 <- lm(median_house_value ~ median_income + ocean_proximity, data = housing_tidy)
 
-autoplot(model2)
+autoplot(model_2)
 
-summary(model2)
+summary(model_2)
 ```
 
+Diagnostics Review:
 
+The model is not adequate because:
+1. The Residuals vs Fitted plot are not randomly scattered around zero.
+2.The residuals are not following a normal distribution. The extreme values in the Q-Q plot are not lying on the straight line, although  improved when compared to ``model_1``.
+3. The Scale-Location plot shows that the residual variation is not occurring on a fixed band above the x-axis. The scatter shows a funnel shaped distribution, which indicates heteroskedasticity although improved when compared to ``model_1``.  
 
+Model Interpretation:
+
+1. The selected predictors (``median_income`` and ``ocean_proximity``) explain 55.29% of the ``median_house_value`` variance. This is a mild improvement when compared to ``model_1``.
+2. For every unit increase in the ``median_income``, the ``median_house_value`` increases by 35,118.
+3. The ``median_house_value`` changes depending on the house location. If a house is on an island, the price increases by 200,480.2 if the ``median_income`` predictor remains the same.
 
 # Extension
     
@@ -158,30 +183,17 @@ summary(model2)
 **Ans**
 Chosen categorical predictor: ocean_proximity
 ```{r}
-housing_dummy <- housing %>%
-  fastDummies::dummy_cols(select_columns = "ocean_proximity", remove_first_dummy = TRUE, remove_selected_columns = TRUE) 
-
-housing_dummy <- housing_dummy %>% 
-  clean_names()
+model_3 <- lm(log(median_house_value) ~ log(median_income) + ocean_proximity +
+                log(median_income):ocean_proximity, data = housing_tidy)
 ```
 
 ```{r}
-model3 <- lm(median_house_value ~ median_income + housing_median_age + 
-             # log10(median_income)*ocean_proximity_inland + 
-             # log10(median_income)*ocean_proximity_island + 
-             # log10(median_income)*ocean_proximity_near_bay + 
-             log10(median_income)*ocean_proximity_near_ocean,
-             data = housing_dummy)
-plotModel(model3)
+autoplot(model_3)
 
-
+summary(model_3)
 ```
 
-```{r}
-autoplot(model3)
-
-summary(model3)
-```
+There's a small improvement as the current predictors explain 60.68% of the ``log(median_house_value)`` variance. Some of the predictors related to ocean proximity are statistically not significant though. 
 
 
 <br>
@@ -189,7 +201,12 @@ summary(model3)
 9. Find and plot an appropriate visualisation to show the effect of this interaction
 
 ```{r}
-coplot(median_house_value ~ median_income | ocean_proximity_near_ocean,
-       data = housing_dummy)
+housing_tidy %>%
+  ggplot(aes(x = log(median_income),
+             y = log(median_house_value), 
+             colour = ocean_proximity)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~ ocean_proximity)
 ```
 

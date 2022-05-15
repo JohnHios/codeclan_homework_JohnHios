@@ -26,7 +26,9 @@ We are interested in determining the accuracy of the job estimations made by the
 
 <br>
 
-#### Load the data into a dataframe `project`
+#### Task 1
+
+Load the data into a dataframe `project`
 
 __Ans__
 
@@ -47,7 +49,9 @@ glimpse(project)
 
 <br>
 
-#### Plot the data, taking `estimated_length` as the independent variable and `actual_length` as the dependent variable. 
+#### Task 2
+
+Plot the data, taking `estimated_length` as the independent variable and `actual_length` as the dependent variable. 
 
 __Ans__
 ```{r}
@@ -61,7 +65,9 @@ project %>%
 
 <br>
 
-#### Calculate the correlation coefficient of `estimated_length` and `actual_length` and interpret the value you obtain.
+#### Task 3
+
+Calculate the correlation coefficient of `estimated_length` and `actual_length` and interpret the value you obtain.
 
 __Ans__
 ```{r}
@@ -72,7 +78,9 @@ We would say that the data are very strongly positively correlated as per the sc
 
 <br>
 
-#### Perform a simple linear regression using `actual_length` as the dependent variable, and `estimated_length` as the independent variable. 
+#### Task 4
+
+Perform a simple linear regression using `actual_length` as the dependent variable, and `estimated_length` as the independent variable. 
 
 Save the model object to a variable. 
 
@@ -84,7 +92,9 @@ model <- lm(formula = actual_length ~ estimated_length, data = project)
 
 <br>
 
-#### Interpret the regression coefficient of `estimated_length` (i.e. slope, gradient) you obtain from the model. 
+#### Task 5
+
+Interpret the regression coefficient of `estimated_length` (i.e. slope, gradient) you obtain from the model. 
 
 How do you interpret the $r^2$ value reported by the model?
 
@@ -92,15 +102,20 @@ __Ans__
 ```{r}
 summary(model)
 ```
-  + The intercept has a $p$-value much larger than a significance level of $\alpha$ = 0.05, therefore we fail to reject the hypothesis that the intercept is zero ($H_0: intercept = 0$).
-
-  + The slope $p$-value is less than the $\alpha$ = 0.05 significance level, therefore we can be reasonably certain that the coefficient is significantly different from zero.
+  + The regression equation is: 
+  
+  $$(actual\_length) = 1.4164 +  1.2235*(estimated\_length)$$
+  
+  
+      For 1 day of increase in the ``estimated_length``, the ``actual_length`` increases by 1.2235 days, which effectively means that the company underestimates the job lengths.
 
   + The coefficient of determination is $r^2$ = 0.6401. This means that the simple linear regression model explains the 64.01% of the variation in ``actual_length``.  
 
 <br>
 
-## Is the relationship statistically significant? 
+## Task 6
+
+Is the relationship statistically significant? 
 
 Remember, to assess this you need to check the $p$-value of the regression coefficient (or slope/gradient). But you should first check the regression diagnostic plots to see if the $p$-value will be reliable (don't worry about any outlier points you see in the diagnostic plots, we'll return to them in the extension).
 
