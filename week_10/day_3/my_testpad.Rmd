@@ -71,6 +71,7 @@ Variables to remove as being unlikely to impact the price of housing
 
 ```{r}
 houses_tidy <- houses %>%
+  # select(-c("date", "id", "sqft_living15", "sqft_lot15", "zipcode"))
   select(-c(date, id, sqft_living15, sqft_lot15, zipcode))
 
 houses_tidy
@@ -86,7 +87,7 @@ houses_tidy %>%
 
 ```{r}
 houses_tidy <- houses_tidy %>%
-  mutate(across(waterfront, as.logical))
+  mutate(waterfront = as.logical(waterfront))
 ```
 
 
@@ -99,11 +100,8 @@ houses_tidy %>%
 
 ```{r}
 houses_tidy <- houses_tidy %>% 
-  mutate(
-    yr_renovated = case_when(
-      yr_renovated == 0 ~ FALSE,
-      yr_renovated != 0 ~ TRUE,
-    ))
+  mutate(renovated = yr_renovated != 0) %>%   # alternatively: ifelse(yr_renovated == 0, FALSE, TRUE)
+  select(-yr_renovated)
 ```
 
 
@@ -122,6 +120,14 @@ houses_tidy %>%
 ```
 
     
+```{r}
+houses_tidy <- houses_tidy %>%
+  mutate(condition = as_factor(condition)) %>%
+  mutate(grade = as_factor(grade))
+
+glimpse(houses_tidy)
+```
+
 
 
 # Question 2
@@ -134,6 +140,13 @@ Check for aliased variables using the `alias()` function (this takes in a formul
 alias(lm(price ~ ., data = houses_tidy))
 ```
 
+Variable ``sqft_basement`` can be computed from ``sqft_living`` - ``sqft_above``. We drop ``sqft_living`` from the potential predictors
+```{r}
+houses_tidy <- houses_tidy %>%
+  select(-"sqft_living")
+
+glimpse(houses_tidy)
+```
 
 
 # Question 3

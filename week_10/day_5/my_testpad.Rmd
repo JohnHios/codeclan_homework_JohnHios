@@ -1,0 +1,195 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+1. Call libraries
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+library(GGally)
+```
+
+
+
+2. View data
+```{r}
+avocado <- read_csv(here("data/avocado.csv")) %>% 
+  clean_names()
+
+glimpse(avocado)
+```
+
+3. Check for NA values
+```{r}
+avocado %>% 
+  summarise(across(.cols = everything(),
+                   .fns = ~sum(is.na(.x))))
+
+```
+No missing values!
+
+
+
+4. Data familiarisation
+
+```{r}
+avocado %>% 
+  distinct(year)
+```
+
+```{r}
+avocado %>% 
+  distinct(type)
+```
+Categorical variable - dummy variable! Have to make it a factor!
+
+
+```{r}
+avocado %>% 
+  distinct(region)
+```
+There is region value that refers to the TotalUS - perhaps better to model this value rather than all of the region values together.
+
+
+
+```{r}
+avocado %>% 
+  group_by(year, type) %>% 
+  summarise(avg_mean_price = mean(average_price))
+```
+Funny jump in avocado price in 2017 - needs further investigation?
+
+
+```{r}
+avocado %>% 
+  filter(region == "TotalUS") %>% 
+  arrange(date)
+```
+
+```{r}
+avocado %>% 
+  filter(region == "TotalUS") %>%
+  group_by(year, type) %>% 
+  summarise(avg_mean_price = mean(average_price))
+```
+Funny jump in avocado price in 2017. I saw this previously when considered all regions - needs further investigation?
+
+
+
+4.1 View data as time series:
+
+```{r}
+avocado %>% 
+  filter(region == "TotalUS") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = average_price, group = type, color = type))
+```
+Country-wide there's a seasonality in the avocado price - it peaks around September. The average price during this time of the year has been increasing as seen in the data for 2015-2017.
+
+There were 6 consecutive weeks in 2015 (2015-07-05	to 2015-08-09) where the ``organic`` avocado price was stuck at 1.00. This value does not look normal as seen in the trend plot above. Perhaps better to replace these values with the value from 2015-06-28	(ie 1.64) or the average of avocado prices between 2015-06-28 and 2015-08-16	(ie average of 1.64 and 1.75).
+
+NB: For the ``conventional`` avocado price, the price between 2015-07-12 and 2015-07-26 was 1.07. It is likely that these values were imputed, too.	
+
+
+4.2 Check of trends for other variables
+```{r}
+avocado %>% 
+  filter(region == "TotalUS") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = total_volume, group = type, color = type))
+```
+```{r}
+avocado %>% 
+  filter(region == "TotalUS") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = x4046, group = type, color = type))
+```
+
+```{r}
+avocado %>% 
+  filter(region == "TotalUS") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = x4225, group = type, color = type))
+```
+
+```{r}
+avocado %>% 
+  filter(region == "TotalUS") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = x4770, group = type, color = type))
+```
+
+```{r}
+avocado %>% 
+  filter(region == "TotalUS") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = total_bags, group = type, color = type))
+```
+
+```{r}
+avocado %>% 
+  filter(region == "TotalUS") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = small_bags, group = type, color = type))
+```
+```{r}
+avocado %>% 
+  filter(region == "TotalUS") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = large_bags, group = type, color = type))
+```
+
+```{r}
+avocado %>% 
+  filter(region == "TotalUS") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = x_large_bags, group = type, color = type))
+```
+
+The values corresponding to ``conventional`` type avocados are many orders of magnitude higher than the ``organic`` type avocados. We have to normalise data!!!
+
+
+
+4.3 Check of avocado price trends for other regions:
+```{r}
+avocado %>% 
+  filter(region == "West") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = average_price, group = type, color = type))
+```
+
+```{r}
+avocado %>% 
+  filter(region == "Northeast") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = average_price, group = type, color = type))
+```
+
+```{r}
+avocado %>% 
+  filter(region == "NewYork") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = average_price, group = type, color = type))
+```
+
+5. Modeling Objective 
+
+Model the avocado `` average_price`` for region ``TotalUS`` for available data of years 2015-2018
+
+
+5.1 Trim data set
+```{r}
+avocado %>% 
+  
+```
+
+
+
+```{r}
+avocado %>%
+  ggscatmat()
+```
+
