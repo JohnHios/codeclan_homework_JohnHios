@@ -39,12 +39,13 @@ No missing values!
 avocado %>% 
   distinct(year)
 ```
+This variable is categorical - should be represented as a factor
 
 ```{r}
 avocado %>% 
   distinct(type)
 ```
-Categorical variable - dummy variable! Have to make it a factor!
+Variable ``type`` is categorical --> dummy variable!
 
 
 ```{r}
@@ -76,7 +77,6 @@ avocado %>%
   summarise(avg_mean_price = mean(average_price))
 ```
 Funny jump in avocado price in 2017. I saw this previously when considered all regions - needs further investigation?
-
 
 
 4.1 View data as time series:
@@ -149,7 +149,7 @@ avocado %>%
   geom_line(aes(x = date, y = x_large_bags, group = type, color = type))
 ```
 
-The values corresponding to ``conventional`` type avocados are many orders of magnitude higher than the ``organic`` type avocados. We have to normalise data!!!
+The values corresponding to ``conventional`` type avocados are many orders of magnitude higher than the ``organic`` type avocados. We have to scale the data!!!
 
 
 
@@ -177,19 +177,226 @@ avocado %>%
 
 5. Modeling Objective 
 
-Model the avocado `` average_price`` for region ``TotalUS`` for available data of years 2015-2018
+Model the avocado ``average_price`` for region ``TotalUS`` for available data of years 2015-2018
 
 
-5.1 Trim data set
+Stuff to do to the data set:
+
+1. Variable ``type`` is categorical --> dummy variable! Have to make it a factor!
+
+2. Variable ``year`` is categorical --> should be represented as a factor
+
+3. ``total_bags`` equals ``small_bags`` + ``large_bags`` + ``x_large_bags``. We can drop ``total_bags``
+
+4. The values corresponding to ``conventional`` type avocados are many orders of magnitude higher than the ``organic`` type avocados. We have to scale data!!!
+
+5. Country-wide there's a seasonality in the avocado price - it peaks around September. The average price during this time of the year has been increasing as seen in the data for 2015-2017.
+
+There were 6 consecutive weeks in 2015 (2015-07-05	to 2015-08-09) where the ``organic`` avocado price was stuck at 1.00. This value does not look normal as seen in the trend plot above. Perhaps better to replace these values with the value from 2015-06-28	(ie 1.64) or the average of avocado prices between 2015-06-28 and 2015-08-16	(ie average of 1.64 and 1.75).
+
+NB: For the ``conventional`` avocado price, the price between 2015-07-12 and 2015-07-26 was 1.07. It is likely that these values were imputed, too.	
+
+
+
+5.1 Tidy data set
+
 ```{r}
-avocado %>% 
-  
+impute_value <- avocado$average_price[avocado$date == "2015-06-28" & avocado$region == "TotalUS" & avocado$type == "organic"]
+
+avocado_tidy <- avocado %>%
+  filter(region == "TotalUS") %>%
+  mutate(year = as.factor(year),
+         average_price = ifelse(
+           type == "organic" & average_price == 1, 
+           impute_value, 
+           average_price),
+  ) %>% 
+  mutate(across(.cols = total_volume:x_large_bags, .fns = ~scale(.x))) %>% 
+  select(-c(x1, date, region, total_bags))
+
+```
+5.2 Check for aliases
+
+```{r}
+alias(average_price ~ ., data = avocado_tidy)
+```
+Ok, no aliases occurring to data set!
+
+
+
+5.3 Check associations of potential predictors
+
+Split data in numeric and non-numeric
+```{r}
+avocado_tidy_numeric <- avocado_tidy %>%
+  select_if(is.numeric)
+
+avocado_tidy_nonnumeric <- avocado_tidy %>%
+  select_if(function(x) !is.numeric(x))
+
+avocado_tidy_nonnumeric$average_price <- avocado_tidy$average_price
 ```
 
 
 
+
 ```{r}
-avocado %>%
+avocado_tidy_numeric %>%
   ggscatmat()
 ```
+
+
+
+
+```{r}
+avocado_tidy_nonnumeric %>%
+  ggpairs()
+```
+
+
+Automated Modeling
+==================
+
+
+
+```{r}
+library(leaps)
+```
+1. Forward search
+```{r}
+regsubsets_forward <- regsubsets(average_price ~ ., data = avocado_tidy, nvmax = 9, method = "forward")
+```
+
+```{r}
+sum_regsubsets_forward <- summary(regsubsets_forward)
+sum_regsubsets_forward
+```
+
+
+```{r}
+plot(regsubsets_forward, scale = "bic")
+```
+
+
+```{r}
+plot(sum_regsubsets_forward$rsq, type = "b")
+```
+
+
+```{r}
+plot(sum_regsubsets_forward$bic, type = "b")
+```
+
+```{r}
+plot(sum_regsubsets_forward$cp, type = "b")
+```
+
+Go ahead and extract the 3-predictor model, and then check its significance and the diagnostic plots.
+```{r}
+summary(regsubsets_forward)$which[3,]
+```
+
+```{r}
+mod_with_year <- lm(average_price ~ x4225 + year, data = avocado_tidy)
+summary(mod_with_year)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+plot(mod_with_year)
+```
+
+2. Exhaustive search
+```{r}
+regsubsets_exhaustive <- regsubsets(average_price ~ ., data = avocado_tidy, nvmax = 9, method = "exhaustive")
+```
+
+```{r}
+sum_regsubsets_exhaustive <- summary(regsubsets_exhaustive)
+sum_regsubsets_exhaustive
+```
+
+```{r}
+plot(sum_regsubsets_exhaustive$rsq, type = "b")
+```
+
+```{r}
+plot(sum_regsubsets_exhaustive$bic, type = "b")
+```
+
+
+Go ahead and extract the 4-predictor model, and then check its significance and the diagnostic plots.
+```{r}
+summary(regsubsets_exhaustive)$which[4,]
+```
+
+```{r}
+mod_exhaustive_with_year <- lm(average_price ~ total_volume + x4770 + x_large_bags + type + year, data = avocado_tidy)
+summary(mod_exhaustive_with_year)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+plot(mod_exhaustive_with_year)
+```
+
+3. Use the ``gmulti`` package
+
+```{r}
+library(glmulti)
+glmulti_fit <- glmulti(
+  average_price ~ ., 
+  data = avocado_tidy,
+  level = 2, # 2 = include pairwise interactions, 1 = main effects only (main effect = no pairwise interactions)
+  minsize = 0, # no min size of model
+  maxsize = -1, # -1 = no max size of model
+  marginality = TRUE, # marginality here means the same as 'strongly hierarchical' interactions, i.e. include pairwise interactions only if both predictors present in the model as main effects.
+  method = "g", # the problem is too large for exhaustive search, so search using a genetic algorithm
+  crit = bic, # criteria for model selection is BIC value (lower is better)
+  plotty = FALSE, # don't plot models as function runs
+  report = TRUE, # do produce reports as function runs
+  confsetsize = 100, # return best 100 solutions
+  fitfunction = lm # fit using the `lm` function
+)
+```
+
+
+```{r}
+summary(glmulti_fit)
+```
+
+
+```{r}
+# here is the best model (lowest BIC) from the glmulti run above
+mod_interact <- lm(average_price ~ 1 + year + total_volume + x4046 + x4225 + x4770 +
+                     small_bags + large_bags + type + small_bags:total_volume +
+                     small_bags:x4225 + large_bags:total_volume + large_bags:x4046 +
+                     type:total_volume + type:x4225 + type:x4770 + type:small_bags +
+                     year:small_bags + year:type,
+                     data = avocado_tidy)
+summary(mod_interact)
+```
+
+
+
+```{r}
+# let's see diagnostic plots
+par(mfrow = c(2, 2))
+plot(mod_interact)
+```
+
+
+
+```{r}
+# calculate predictor importances. This will take a while to run, as lmg tries all possible orders of including predictors!
+# library(relaimpo)
+# calc.relimp(mod_interact, type = "lmg", rela = TRUE)
+
+```
+
+
+
+
+
+
 
