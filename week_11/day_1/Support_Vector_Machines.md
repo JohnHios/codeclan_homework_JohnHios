@@ -23,7 +23,7 @@ Classification and clustering are two pattern identification methods used in mac
 A Support Vector Machine (SVM) is a supervised machine learning method used for solving classification problems.
 
 
-## How do SVMs work
+# How do SVMs work
 
 SVMs are based on the idea of finding a hyperplane that best divides a dataset into two classes, as shown in the 2D example below.
 
@@ -31,7 +31,7 @@ SVMs are based on the idea of finding a hyperplane that best divides a dataset i
 Support vectors are the data points nearest to the hyperplane (line in the 2D case). If these points were  removed, they would alter the position of the dividing hyperplane. The goal is to select SVs, such that the so called margin – the corridor between the separating hyperplanes – is maximal.
 
 
-## Strengths/Weaknesses
+# Strengths/Weaknesses
 
 Strengths:
 
@@ -57,3 +57,7 @@ SVMs have been successfully applied to:
 + early medical diagnostics / image recognition challenges
 + text classification (eg category assignment, detecting spam and sentiment analysis) 
 
+<br><br><br>
+Images adapted from: 
+
+https://towardsdatascience.com/support-vector-machine-introduction-to-machine-learning-algorithms-934a444fca47
