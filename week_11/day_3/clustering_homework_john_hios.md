@@ -7,7 +7,7 @@ output:
     keep_md: yes
     toc: true
     toc_float: true
-    number_sections: true
+    number_sections: false
     df_print: paged
     theme: cerulean #flatly #journal #cosmo
   pdf_document: default
@@ -15,8 +15,9 @@ output:
 
 
 
+# Task 1
 
-* You have been provided some customer data from a shopping centre. Do some exploratory analysis on the data. Comment on findings. 
+You have been provided some customer data from a shopping centre. Do some exploratory analysis on the data. Comment on findings. 
 
 **Ans**
 
@@ -144,6 +145,7 @@ View mean and std
 customers %>%
   group_by(gender) %>%
   summarise(
+    count = n(),
     mean_age = mean(age),
     sd_age = sd(age),
     mean_income = mean(annual_income_k),
@@ -155,16 +157,16 @@ customers %>%
 
 <div data-pagedtable="false">
   <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["gender"],"name":[1],"type":["chr"],"align":["left"]},{"label":["mean_age"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["sd_age"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["mean_income"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["sd_income"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["mean_spending_score"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["sd_spending_score"],"name":[7],"type":["dbl"],"align":["right"]}],"data":[{"1":"Female","2":"38.09821","3":"12.64410","4":"59.25000","5":"26.01195","6":"51.52679","7":"24.11495"},{"1":"Male","2":"39.80682","3":"15.51481","4":"62.22727","5":"26.63837","6":"48.51136","7":"27.89677"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["gender"],"name":[1],"type":["chr"],"align":["left"]},{"label":["count"],"name":[2],"type":["int"],"align":["right"]},{"label":["mean_age"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["sd_age"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["mean_income"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["sd_income"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["mean_spending_score"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["sd_spending_score"],"name":[8],"type":["dbl"],"align":["right"]}],"data":[{"1":"Female","2":"112","3":"38.09821","4":"12.64410","5":"59.25000","6":"26.01195","7":"51.52679","8":"24.11495"},{"1":"Male","2":"88","3":"39.80682","4":"15.51481","5":"62.22727","6":"26.63837","7":"48.51136","8":"27.89677"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 
 
 
 
+# Task 2
 
-
-* We are interested in creating a marketing campaign to target customers based on their spending score and annual income. Perform a k-means clustering to find if there are meaningful clusters in the data to target the customers. 
+We are interested in creating a marketing campaign to target customers based on their spending score and annual income. Perform a k-means clustering to find if there are meaningful clusters in the data to target the customers. 
 
 **Ans**
 
@@ -182,6 +184,8 @@ customers %>%
 
 It seems that there are 5 candidate clusters in the scatterplot
 
+
+# Task 3
 
 * Perform k-means clustering and chose a value of k.
 
@@ -312,7 +316,7 @@ clusterings
 
 
 
-1. Elbow method
+**1. Elbow method**
 
 ```r
 fviz_nbclust(customers_subset, 
@@ -324,7 +328,7 @@ fviz_nbclust(customers_subset,
 ![](clustering_homework_john_hios_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 
-2. Silhouette coefficient
+**2. Silhouette coefficient**
 
 ```r
 fviz_nbclust(customers_subset, kmeans, method = "silhouette", nstart = 25)
@@ -333,7 +337,7 @@ fviz_nbclust(customers_subset, kmeans, method = "silhouette", nstart = 25)
 ![](clustering_homework_john_hios_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 
-3. Gap statistic
+**3. Gap statistic**
 
 ```r
 fviz_nbclust(customers_subset, kmeans, method = "gap_stat", nstart = 50) #would put nstart=25 if had more computing power
@@ -362,8 +366,9 @@ clusterings %>%
 </div>
 
 
+# Task 4
 
-* Visualise the clustering for your chosen value of k.
+Visualise the clustering for your chosen value of k.
 
 **Ans**
 
@@ -380,14 +385,18 @@ clusterings %>%
 
 
 
+# Task 5
 
-* Do you think the clustering seems a good fit for this data?
+Do you think the clustering seems a good fit for this data?
 
 **Ans**
 
 It seems a reasonable fit, which is in line with human intuition based on the scatterplot created during the exploratory analysis stage of  the data.
 
-* Comment on the attributes on one or two of the clusters (maybe even give them a label if you like - like in section 4.1 of the 'Segmentation & clustering intro' lesson). 
+
+# Task 6
+
+Comment on the attributes on one or two of the clusters (maybe even give them a label if you like - like in section 4.1 of the 'Segmentation & clustering intro' lesson). 
 
 **Ans**
 

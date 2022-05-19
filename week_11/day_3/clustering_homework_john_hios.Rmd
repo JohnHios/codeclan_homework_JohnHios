@@ -7,7 +7,7 @@ output:
     keep_md: yes
     toc: true
     toc_float: true
-    number_sections: true
+    number_sections: false
     df_print: paged
     theme: cerulean #flatly #journal #cosmo
   pdf_document: default
@@ -17,8 +17,9 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Task 1
 
-* You have been provided some customer data from a shopping centre. Do some exploratory analysis on the data. Comment on findings. 
+You have been provided some customer data from a shopping centre. Do some exploratory analysis on the data. Comment on findings. 
 
 **Ans**
 
@@ -53,6 +54,7 @@ View mean and std
 customers %>%
   group_by(gender) %>%
   summarise(
+    count = n(),
     mean_age = mean(age),
     sd_age = sd(age),
     mean_income = mean(annual_income_k),
@@ -65,9 +67,9 @@ customers %>%
 
 
 
+# Task 2
 
-
-* We are interested in creating a marketing campaign to target customers based on their spending score and annual income. Perform a k-means clustering to find if there are meaningful clusters in the data to target the customers. 
+We are interested in creating a marketing campaign to target customers based on their spending score and annual income. Perform a k-means clustering to find if there are meaningful clusters in the data to target the customers. 
 
 **Ans**
 
@@ -83,7 +85,9 @@ customers %>%
 It seems that there are 5 candidate clusters in the scatterplot
 
 
-* Perform k-means clustering and chose a value of k.
+# Task 3
+
+Perform k-means clustering and chose a value of k.
 
 **Ans**
 
@@ -146,7 +150,7 @@ clusterings
 
 
 
-1. Elbow method
+**1. Elbow method**
 ```{r}
 fviz_nbclust(customers_subset, 
              kmeans, 
@@ -155,19 +159,19 @@ fviz_nbclust(customers_subset,
 ```
 
 
-2. Silhouette coefficient
+**2. Silhouette coefficient**
 ```{r}
 fviz_nbclust(customers_subset, kmeans, method = "silhouette", nstart = 25)
 ```
 
 
-3. Gap statistic
+**3. Gap statistic**
 ```{r}
-fviz_nbclust(customers_subset, kmeans, method = "gap_stat", nstart = 50) #would put nstart=25 if had more computing power
+fviz_nbclust(customers_subset, kmeans, method = "gap_stat", nstart = 50) 
 ```
 
 
-Methods #1 and #2 indicate k=5 clusters is sufficient
+Methods #1 and #2 indicate k=5 clusters are sufficient. Method #3 appears to be confused with the local maximum at k=1 and misses out the global maximum at k=5.
 
 
 
@@ -180,8 +184,9 @@ clusterings %>%
 ```
 
 
+# Task 4
 
-* Visualise the clustering for your chosen value of k.
+Visualise the clustering for your chosen value of k.
 
 **Ans**
 
@@ -195,14 +200,18 @@ clusterings %>%
 
 
 
+# Task 5
 
-* Do you think the clustering seems a good fit for this data?
+Do you think the clustering seems a good fit for this data?
 
 **Ans**
 
 It seems a reasonable fit, which is in line with human intuition based on the scatterplot created during the exploratory analysis stage of  the data.
 
-* Comment on the attributes on one or two of the clusters (maybe even give them a label if you like - like in section 4.1 of the 'Segmentation & clustering intro' lesson). 
+
+# Task 6
+
+Comment on the attributes on one or two of the clusters (maybe even give them a label if you like - like in section 4.1 of the 'Segmentation & clustering intro' lesson). 
 
 **Ans**
 
