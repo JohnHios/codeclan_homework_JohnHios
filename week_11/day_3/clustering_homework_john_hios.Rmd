@@ -1,0 +1,212 @@
+---
+title: "Clustering homework"
+author: "John Hios"
+date: "19/05/2022"
+output:
+  html_document:
+    keep_md: yes
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    theme: cerulean #flatly #journal #cosmo
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+* You have been provided some customer data from a shopping centre. Do some exploratory analysis on the data. Comment on findings. 
+
+**Ans**
+
+Call Libraries
+```{r}
+library(janitor)
+library(here)
+library(fastDummies)
+library(broom)
+library(tidyverse)
+library(factoextra)
+```
+
+
+Load data
+```{r}
+customers <- read_csv(here("data/mall_customers.csv")) %>% 
+  clean_names()
+
+glimpse(customers)
+```
+
+
+Check for missing values
+```{r}
+customers  %>% 
+  summarise(across(everything(), .fns = ~sum(is.na(.x))))
+```
+
+View mean and std
+```{r}
+customers %>%
+  group_by(gender) %>%
+  summarise(
+    mean_age = mean(age),
+    sd_age = sd(age),
+    mean_income = mean(annual_income_k),
+    sd_income = sd(annual_income_k),
+    mean_spending_score = mean(spending_score_1_100),
+    sd_spending_score = sd(spending_score_1_100)
+  )
+```
+
+
+
+
+
+
+* We are interested in creating a marketing campaign to target customers based on their spending score and annual income. Perform a k-means clustering to find if there are meaningful clusters in the data to target the customers. 
+
+**Ans**
+
+Create scatterplot of ``annual_income_k`` vs ``spending_score_1_100``
+
+```{r}
+customers %>%
+  ggplot() +
+  aes(x = annual_income_k, y = spending_score_1_100, color = gender) +
+  geom_point()
+```
+
+It seems that there are 5 candidate clusters in the scatterplot
+
+
+* Perform k-means clustering and chose a value of k.
+
+**Ans**
+
+```{r}
+customers_subset <- customers %>% 
+  select(annual_income_k, spending_score_1_100)
+```
+
+```{r}
+set.seed(1234)
+
+clustered_customers <- kmeans(customers_subset, 
+                            centers = 5, 
+                            nstart = 25)
+clustered_customers
+```
+
+
+```{r}
+tidy(clustered_customers, 
+     col.names = colnames(customers_subset))
+```
+
+
+```{r}
+augment(clustered_customers, customers_subset)
+```
+
+Clustered Metrics
+```{r}
+glance(clustered_customers)
+```
+
+
+
+Gathering cluster info
+```{r}
+# Set min & max number of clusters want to look at 
+max_k <- 8 
+
+k_clusters <- tibble(k = 1:max_k) %>%
+  mutate(
+    kclust = map(k, ~ kmeans(customers_subset, .x, nstart = 25)), 
+    tidied = map(kclust, tidy),
+    glanced = map(kclust, glance),
+    augmented = map(kclust, augment, customers_subset)
+  )
+
+k_clusters
+```
+
+Choosing Number of clusters
+
+```{r}
+clusterings <- k_clusters %>%
+  unnest(glanced)
+
+clusterings
+```
+
+
+
+1. Elbow method
+```{r}
+fviz_nbclust(customers_subset, 
+             kmeans, 
+             method = "wss", 
+             nstart = 25)
+```
+
+
+2. Silhouette coefficient
+```{r}
+fviz_nbclust(customers_subset, kmeans, method = "silhouette", nstart = 25)
+```
+
+
+3. Gap statistic
+```{r}
+fviz_nbclust(customers_subset, kmeans, method = "gap_stat", nstart = 50) #would put nstart=25 if had more computing power
+```
+
+
+Methods #1 and #2 indicate k=5 clusters is sufficient
+
+
+
+```{r}
+clusterings %>% 
+  unnest(augmented) %>%
+  filter(k == 5) %>%
+  group_by(.cluster) %>%
+  summarise(mean(annual_income_k), mean(spending_score_1_100))
+```
+
+
+
+* Visualise the clustering for your chosen value of k.
+
+**Ans**
+
+```{r}
+clusterings %>% 
+  unnest(cols = c(augmented)) %>% 
+  filter(k == 5) %>% 
+  ggplot(aes(x = annual_income_k, y = spending_score_1_100)) +
+  geom_point(aes(color = .cluster))
+```
+
+
+
+
+* Do you think the clustering seems a good fit for this data?
+
+**Ans**
+
+It seems a reasonable fit, which is in line with human intuition based on the scatterplot created during the exploratory analysis stage of  the data.
+
+* Comment on the attributes on one or two of the clusters (maybe even give them a label if you like - like in section 4.1 of the 'Segmentation & clustering intro' lesson). 
+
+**Ans**
+
+
+
+
+
