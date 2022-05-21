@@ -1,0 +1,164 @@
+---
+title: "Decision trees homework"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    css: ../../../styles.css
+  pdf_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+```
+
+
+<br>
+In this homework we will create a decision tree to see which factors are useful in predicting whether or not a passenger on the titanic will survive.  
+
+
+Run the code below before you begin: 
+
+
+```{r, warning = FALSE, message = FALSE}
+library(rpart)
+library(rpart.plot)
+library(tidyverse)
+
+library(tidyverse)
+titanic_set <- read_csv('data/titanic_decision_tree_data.csv')
+
+shuffle_index <- sample(1:nrow(titanic_set))
+
+# shuffle the data so class order isn't in order - need this for training/testing split later on 
+titanic_set <- titanic_set[shuffle_index, ]
+```
+
+<br>
+
+**Data Dictionary**
+
+  * **sex**: Biological Sex, male or female  
+  * **age_status**: adult or child (child defined as under 16)  
+  * **class** : Ticket class, 1 = 1st (Upper class), 2 = 2nd (Middle Class), 3 = 3rd (Lower Class)    
+  * **port_embarkation**: C = Cherbourg, Q = Queenstown, S = Southampton  
+  * **sibsp** : number of siblings / spouses aboard the Titanic   
+  * **parch**: number of parents / children aboard the Titanic. Some children travelled only with a nanny, therefore parch=0 for them. 
+  * **survived_flag** : did they survive, 0 = No, 1 = Yes  
+
+
+
+# MVP 
+
+
+## Question 1  
+
+<br> 
+Cleaning up the data is always the first step. Do the following: 
+
+  * Take only observations which have a `survived` flag (i.e. that aren't missing)  
+  * Turn your important variables into factors (sex, survived, pclass, embarkation)  
+  * Create an `age_status` variable which groups individuals under (and including) 16 years of age into a category called "child" category and those over 16 into a category called "adult".  
+  * Drop the NA  
+  * Drop any variables you don't need (`X1`, `passenger_id`, `name`, `ticket`, `far`, `cabin`)  
+
+If you need help doing this, the code is below, but please try it yourself first so you can learn!
+
+<br>
+<details>
+<summary>**Data Cleaning Code** </summary>
+<br>
+
+```{r}
+titanic_clean <- titanic_set %>%
+  filter(survived %in% c(0,1)) %>%
+# Convert to factor level
+	mutate(sex = as.factor(sex), 
+	       age_status = as.factor(if_else(age <= 16, "child", "adult")),
+         class = factor(pclass, levels = c(3,2,1), labels = c("Lower", "Middle", "Upper")), 
+	       survived_flag = factor(survived, levels = c(0,1), labels = c("No", "Yes")), 
+	       port_embarkation = as.factor(embarked)) %>%
+  select(sex, age_status, class, port_embarkation, sib_sp, parch, survived_flag) %>%
+  na.omit()
+```
+</details>
+
+
+<br>
+
+## Question 2  
+
+<br> 
+Have a look at your data and create some plots to ensure you know what you're working with before you begin. Write a summary of what you have found in your plots. Which variables do you think might be useful to predict whether or not people are going to die? Knowing this before you start is the best way to have a sanity check that your model is doing a good job.  
+
+<br>
+
+## Question 3  
+
+<br> 
+Now you can start to build your model. Create your testing and training set using an appropriate split. Check you have balanced sets. Write down why you chose the split you did and produce output tables to show whether or not it is balanced. [**Extra** - if you want to force balanced testing and training sets, have a look at the `stratified()` function in package `splitstackshape` (you can specify multiple variables to stratify on by passing a vector of variable names to the `group` argument, and get back testing and training sets with argument `bothSets = TRUE`)]
+
+## Question 4      
+
+<br> 
+Create your decision tree to try and predict survival probability using an appropriate method, and create a decision tree plot.
+
+## Question 5    
+
+<br> 
+Write down what this tells you, in detail. What variables are important? What does each node tell you? Who has the highest chance of surviving? Who has the lowest? Provide as much detail as you can.    
+
+<br>
+
+## Question 6     
+
+<br>  
+Test and add your predictions to your data. Create a confusion matrix. Write down in detail what this tells you for this specific dataset.  
+
+# Extension  
+
+See how a `ranger()` random forest classifier compares with a single decision tree in terms of performance. Can you tune the values of the `mtry`, `splitrule` and `min.node.size` hyperparameters? Which variables in the dataset turn out to be most important for your best model? The `Kappa` metric might be the best one to focus on if you want to improve performance for an imbalanced data set. Do some research on the definition of `Kappa` before you start.
+
+We provide the code in the dropdown below if you get stuck, but still want to play around with this (note that run time can be up to 5-10 mins for the tuning). **Save your notebook before you begin** in case you need to force quit your session!
+
+<br>
+<details>
+<summary>**Code**</summary>
+
+```{r, eval=FALSE}
+library(ranger)
+
+control <- trainControl(
+  method = "repeatedcv", 
+  number = 5, 
+  repeats = 10
+)
+
+tune_grid = expand.grid(
+  mtry = 1:6,
+  splitrule = c("gini", "extratrees"),
+  min.node.size = c(1, 3, 5)
+)
+```
+
+```{r, eval=FALSE}
+rf_tune <- train(
+  survived_flag ~ ., 
+  data = titanic_train, 
+  method = "ranger",
+  metric = "Kappa",
+  num.trees = 1000,
+  importance = "impurity",
+  tuneGrid = tune_grid, 
+  trControl = control
+)
+
+plot(rf_tune)
+rf_tune
+```
+</details>
+<br>
+
