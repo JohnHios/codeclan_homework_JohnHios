@@ -168,12 +168,14 @@ Now you can start to build your model. Create your testing and training set usin
 
 **Ans**
 
-Decided not to go with the functions of the  `splitstackshape` package. I did a 80-20 split.
+
 ```{r}
 # set the random seed number
 set.seed(45678)
 ```
 
+
+Case#1: 80-20 split without stratification:
 ```{r}
 n_data <- nrow(titanic_clean)
 
@@ -198,6 +200,91 @@ titanic_train %>%
   janitor::tabyl(survived)
 ```
 
+Case#2: 80-20 split with stratification per the variables shown below (I didn't stratify per ``parch`` because there weren't enough rows for all distinct groups):
+```{r}
+library(splitstackshape)
+
+sets <- stratified(titanic_clean, group = c("survived", "embarked", "pclass", "sex", "age_status"), bothSets = TRUE, size = 0.2)
+
+titanic_test_strat <- sets$SAMP1
+titanic_train_strat <- sets$SAMP2
+
+
+tibble(
+  nrows_testing_strat = nrow(titanic_test_strat),
+  nrows_training_strat = nrow(titanic_train)
+)
+```
+
+Check percentages of stratified variables (testing and training)
+
+1. Variable ``survived``
+```{r}
+titanic_test_strat %>%
+ janitor::tabyl(survived)
+```
+
+```{r}
+titanic_train_strat %>%
+ janitor::tabyl(survived)
+```
+
+2. Variable ``embarked``
+```{r}
+titanic_test_strat %>%
+ janitor::tabyl(embarked)
+```
+
+```{r}
+titanic_train_strat %>%
+ janitor::tabyl(embarked)
+```
+
+
+3. Variable ``pclass`` 
+```{r}
+titanic_test_strat %>%
+ janitor::tabyl(pclass)
+```
+
+```{r}
+titanic_train_strat %>%
+ janitor::tabyl(pclass)
+```
+
+4. Variable ``sex``
+```{r}
+titanic_test_strat %>%
+ janitor::tabyl(sex)
+```
+
+```{r}
+titanic_train_strat %>%
+ janitor::tabyl(sex)
+```
+
+5. Variable ``age_status``
+```{r}
+titanic_test_strat %>%
+ janitor::tabyl(age_status)
+```
+
+```{r}
+titanic_train_strat %>%
+ janitor::tabyl(age_status)
+```
+
+Check to see how stratification affects ``parch`` distinct values
+```{r}
+titanic_test_strat %>%
+ janitor::tabyl(parch)
+```
+
+```{r}
+titanic_train_strat %>%
+ janitor::tabyl(parch)
+```
+
 
 ## Question 4      
 
@@ -205,6 +292,8 @@ titanic_train %>%
 Create your decision tree to try and predict survival probability using an appropriate method, and create a decision tree plot.
 
 **Ans**
+
+Case#1 - no stratification
 ```{r}
 titanic_fit <- rpart(
   formula = survived ~ ., 
@@ -216,15 +305,47 @@ rpart.plot(titanic_fit,
            yesno = 2, 
            fallen.leaves = TRUE, 
            faclen = 6, 
-           digits = 4)
+           digits = 3)
 ```
 
+Case#2 - stratification
+```{r}
+titanic_fit_strat <- rpart(
+  formula = survived ~ ., 
+  data = titanic_train_strat, 
+  method = 'class'
+)
 
+rpart.plot(titanic_fit_strat, 
+           yesno = 2, 
+           fallen.leaves = TRUE, 
+           faclen = 6, 
+           digits = 3)
+```
 
 ## Question 5    
 
 <br> 
 Write down what this tells you, in detail. What variables are important? What does each node tell you? Who has the highest chance of surviving? Who has the lowest? Provide as much detail as you can.    
+
+**Ans**
+Interpretation of results according to stratified data:
+
++ The largest group in the data (42.6%) are lower & middle class adult male passengers with a probability of survival equal to 11.5% 
+
++ The 2nd largest group in the data (22.2%) are middle & upper class female passengers with a probability of survival equal to 93.7%
+
++ The 3rd largest group in the data (14.1) are upper class adult male passengers with a probability of survival equal to 39.5%
+
++ The 4th largest group in the data (7.9%) are lower class female passengers with 1 sibling/spouse aboard the Titanic with a probability of survival equal to 60.0%
+
++ The 5th largest group in the data (6.5%) are lower class female passengers with more than 1 sibling/spouse aboard the Titanic with a probability of survival equal to 29.7%
+
++ The 6th largest group in the data (3.0%) are lower & middle class under-aged male passengers with less than 2 siblings/spouses and more than one parent/children aboard with a probability of survival equal to 82.4%
+
++ The 7th largest group in the data (2.3%) are lower & middle class under-aged male passengers with 3 or more siblings/spouses  with a probability of survival equal to 0%
+
++ The smallest group in the data (1.6%) are lower & middle class under-aged male passengers that traveled with a nanny with a probability of survival equal to 11.1%
 
 <br>
 
@@ -232,6 +353,52 @@ Write down what this tells you, in detail. What variables are important? What do
 
 <br>  
 Test and add your predictions to your data. Create a confusion matrix. Write down in detail what this tells you for this specific dataset.  
+
+
+**Ans**
+
+Add predictions on test dataset:
+```{r}
+library(modelr)
+
+# add the predictions
+titanic_test_strat_pred <- titanic_test_strat %>%
+  add_predictions(titanic_fit_strat, type = 'class')
+```
+
+
+```{r}
+# look at the variables 
+titanic_test_strat_pred %>%
+  select(sex, pclass, age_status, sib_sp, parch, pred)
+```
+
+Create confusion matrix:
+```{r}
+library(yardstick)
+
+conf_mat <- titanic_test_strat_pred %>%
+              conf_mat(truth = survived, estimate = pred)
+
+conf_mat
+```
+
+```{r}
+tibble(
+  accuracy = accuracy(titanic_test_strat_pred, truth = survived, estimate = pred)$.estimate,
+  sensitivity = sensitivity(titanic_test_strat_pred, truth = survived, estimate = pred)$.estimate,
+  specificity = specificity(titanic_test_strat_pred, truth = survived, estimate = pred)$.estimate
+)
+```
+
+
+Alternative way: Calculate the confusion matrix and accuracy using ``caret`` package:
+```{r}
+library(caret)
+
+confusionMatrix(titanic_test_strat_pred$pred, titanic_test_strat_pred$survived) #order is estimate and then truth 
+
+```
 
 # Extension  
 
